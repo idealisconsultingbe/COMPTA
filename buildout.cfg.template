@@ -63,5 +63,7 @@ eggs = PyPDF
 
 
 [versions]
+setuptools=50.3.2
 pip=9.0.3
 cachetools>=2.1.0
+idna=2.7.0

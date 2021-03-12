@@ -76,7 +76,7 @@ function install_odoo {
             virtualenv -p python3 venv
         fi
     fi
-    venv/bin/pip3 install setuptools
+    venv/bin/pip3 install setuptools==50.3.2
     venv/bin/pip3 install Werkzeug==0.14.1
     venv/bin/python3 bootstrap.py
     bin/buildout
