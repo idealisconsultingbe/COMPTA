@@ -1,0 +1,31 @@
+version: '3.4'
+services:
+  odoo:
+    build:
+      context: .
+      args:
+        SSH_KEY: |
+          -----BEGIN RSA PRIVATE KEY-----
+          <COPY YOU PRIVATE SSH KEY HERE>
+          <DO NOT COMMIT YOUR SSH KEY>
+          -----END RSA PRIVATE KEY-----
+    image: appserver_template:14.0
+    depends_on:
+      - db
+    ports:
+      - "8069"
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DATABASE: odoo
+      POSTGRES_SSL_MODE: prefer
+      ODOO_INSTALL: 0
+      ODOO_CONF_WORKERS: 1
+  db:
+    image: postgres:11
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo

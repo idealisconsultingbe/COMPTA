@@ -1,0 +1,15 @@
+[buildout]
+extends = buildout.cfg.template
+
+[odoo]
+options.admin_passwd = admin
+options.db_user = dbuser
+options.db_password = dbpassword
+options.db_host = 127.0.0.1
+options.pg_path = /usr/bin
+options.limit_memory_hard = 5368709120
+options.limit_memory_soft = 4294967296
+options.limit_time_cpu = 300
+options.limit_time_real = 600
+options.workers = 2
+options.proxy_mode = True

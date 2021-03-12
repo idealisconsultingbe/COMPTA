@@ -1,0 +1,37 @@
+version: '3.4'
+services:
+  odoo:
+    image: registry.myidealis.be/docker/appserver-template/docker-appserver-template:14.0
+    container_name: demo1_odoo_14.0
+    depends_on:
+      - db
+    ports:
+      - "8069"
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DATABASE: odoo
+      POSTGRES_SSL_MODE: prefer
+      ODOO_INSTALL: 1
+      ODOO_CONF_WORKERS: 1
+    labels:
+      - "traefik.frontend.rule=Host:demo1.docker.myidealis.be"
+    networks:
+      - db
+      - odoo
+  db:
+    image: postgres:11
+    container_name: demo1_postgres_11
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo
+    networks:
+      - db
+
+networks:
+  db:
+  odoo:
+    external: true

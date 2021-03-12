@@ -1,0 +1,230 @@
+stages:
+  - Check syntax
+  - Build image
+  - Push image
+  - Deploy
+  - Destroy
+
+
+#pylint:
+#  image: python:3.6
+#  except:
+#    - schedules
+#  stage: Check syntax
+#  before_script:
+#    - pip install pylint --quiet
+#  script:
+#    - pylint --ignored-classes=_socketobject --disable=C0111,C0301,E0401,E1002,R0201,R0801,R0902,R0903,R0904,W0104,W0212,W0511,W0611,W0613 --ignore=readme.md,README.md,COPYRIGHT,LICENSE,.git project_addons/*
+#  allow_failure: true
+
+
+flake8:
+  image: python:3.6
+  except:
+    - schedules
+  stage: Check syntax
+  before_script:
+    - pip install flake8
+  script:
+    - flake8 --extend-ignore=E203,E266,E501,F401,F841,W503,W605 project_addons/
+  allow_failure: true
+
+
+docker build:
+  stage: Build image
+  when: manual
+  variables:
+    GIT_CLONE_PATH: ${CI_BUILDS_DIR}/${CI_CONCURRENT_ID}/${CI_PROJECT_PATH}
+    TAG_COMMIT: ${CI_REGISTRY_IMAGE}:commit_${CI_COMMIT_SHORT_SHA}
+    TAG_CI: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}_${CI_PIPELINE_IID}
+  script:
+    - docker info
+    - 'echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
+    - 'docker pull registry.myidealis.be/docker/ubuntu-odoo:13.0'
+    - 'docker build --no-cache -t "${TAG_COMMIT}" --build-arg SSH_KEY="$(cat ~/.ssh/id_rsa)" .'
+    - 'docker tag "${TAG_COMMIT}" "${TAG_CI}"'
+    - 'docker push "${TAG_COMMIT}"'
+    - 'docker push "${TAG_CI}"'
+    - 'docker image rm "${TAG_COMMIT}"'
+    - 'docker image rm "${TAG_CI}"'
+  allow_failure: false
+  environment:
+    name: review/${CI_COMMIT_REF_NAME}
+    url: https://${GITLAB_USER_LOGIN}_${CI_PROJECT_PATH_SLUG}_${CI_COMMIT_REF_SLUG}.docker.myidealis.be
+    on_stop: "remove container"
+
+
+.job_variables: &job_definition_variables
+  GIT_CLONE_PATH: $CI_BUILDS_DIR/$CI_CONCURRENT_ID/$CI_PROJECT_PATH
+  DOCKER_DRIVER: overlay
+  DB_USER: odoo
+  DB_PSWD: odoo
+  DB_NAME: odoo
+
+
+create postgresql image:
+  stage: Build image
+  rules:
+    - if: '$FTP_HOST && $FTP_USER && $FTP_PASSWORD && $FTP_PREFIX'
+      when: manual
+    - when: never
+  variables:
+    <<: *job_definition_variables
+    GIT_STRATEGY: none
+    GIT_CLONE_PATH: ${CI_BUILDS_DIR}/${CI_CONCURRENT_ID}
+    POSTGRES_IMAGE: "postgres:11"
+  before_script:
+    - apk add --no-cache curl
+    - apk add --no-cache tar
+    - export TAG="postgres_${FTP_USER}:latest"
+  script:
+    - 'echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
+    - 'if [[ ! -z ${FTP_HOST} && ! -z ${FTP_USER} && ! -z ${FTP_PASSWORD} && ! -z ${FTP_PREFIX} ]]; then'
+    - '  time=`date ''+%Y''_''%m''_''%d''`'
+    - '  filename=${FTP_PREFIX}${time}.tar.gz'
+    - '  container_name=postgres_${FTP_USER}_${CONCURENT_ID}'
+    - '  image_name=postgres_${FTP_USER}:latest'
+    - '  curl -u ${FTP_USER}:${FTP_PASSWORD} "ftp://${FTP_HOST}/${filename}" -o "${filename}"'
+    - '  if [ ! -f ${filename} ]; then'
+    - '    time=`date -d "yesterday" ''+%Y''_''%m''_''%d''`'
+    - '    filename=${FTP_PREFIX}${time}.tar.gz'
+    - '    curl -u ${FTP_USER}:${FTP_PASSWORD} "ftp://${FTP_HOST}/${filename}" -o "${filename}"'
+    - '  fi'
+    - '  if [ -f ${filename} ]; then'
+    - '    tar xzf ${filename}'
+    - '    mv ${FTP_PREFIX}${time}.dump 2_${FTP_PREFIX}${time}.sql'
+    - '    sed "/OWNER TO ${DB_USER}/d" -i 2_${FTP_PREFIX}${time}.sql'
+    - '    if [[ ! -z ${SANITIZE_QUERIES} ]]; then'
+    - '      echo ${SANITIZE_QUERIES} > 3_sanitize.sql'
+    - '    fi'
+    - '    docker run --name ${container_name} -v "$PWD":/docker-entrypoint-initdb.d/ -e POSTGRES_USER=${DB_USER} -e POSTGRES_PASSWORD=${DB_PSWD} -e POSTGRES_DB=${DB_NAME} ${POSTGRES_IMAGE}'
+    - '    docker commit ${container_name}'
+    - '    docker tag ${container_name} ${TAG}'
+    - '    docker push "${TAG}"'
+    - '    docker stop ${container_name}'
+    - '    docker container rm ${container_name}'
+    - '    docker image rm ${container_name}'
+    - '    docker image rm ${TAG}'
+    - '  fi'
+    - 'fi'
+  environment:
+    name: review/${CI_COMMIT_REF_NAME}
+    url: https://${GITLAB_USER_LOGIN}_${CI_PROJECT_PATH_SLUG}_${CI_COMMIT_REF_SLUG}.docker.myidealis.be
+    on_stop: "remove container"
+  allow_failure: true
+
+
+push stable image:
+  stage: Push image
+  when: manual
+  variables:
+    GIT_CLONE_PATH: ${CI_BUILDS_DIR}/${CI_CONCURRENT_ID}/${CI_PROJECT_PATH}
+    TAG_CI: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}_${CI_PIPELINE_IID}
+    TAG_STABLE: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}
+  script:
+    - docker info
+    - 'echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
+    - 'docker pull "${TAG_CI}"'
+    - 'docker tag "${TAG_CI}" "${TAG_STABLE}"'
+    - 'docker push "${TAG_STABLE}"'
+    - 'docker image rm "${TAG_STABLE}"'
+    - 'docker image rm "${TAG_CI}"'
+  allow_failure: false
+
+
+.docker-compose-yml: &docker_compose_yml
+  - 'echo "version: ''3.4''" > docker-compose.yml'
+  - 'echo "services:" >> docker-compose.yml'
+  - 'echo "  odoo:" >> docker-compose.yml'
+  - 'echo "    image: ${TAG}" >> docker-compose.yml'
+  - 'echo "    depends_on:" >> docker-compose.yml'
+  - 'echo "      - db" >> docker-compose.yml'
+  - 'echo "    ports:" >> docker-compose.yml'
+  - 'echo "      - "8069"" >> docker-compose.yml'
+  - 'echo "    environment:" >> docker-compose.yml'
+  - 'echo "      POSTGRES_HOST: db" >> docker-compose.yml'
+  - 'echo "      POSTGRES_PORT: 5432" >> docker-compose.yml'
+  - 'echo "      POSTGRES_USER: ${DB_USER}" >> docker-compose.yml'
+  - 'echo "      POSTGRES_PASSWORD: ${DB_PSWD}" >> docker-compose.yml'
+  - 'echo "      POSTGRES_DATABASE: ${DB_NAME}" >> docker-compose.yml'
+  - 'echo "      POSTGRES_SSL_MODE: prefer" >> docker-compose.yml'
+  - 'echo "      ODOO_INSTALL: 1" >> docker-compose.yml'
+  - 'echo "      ODOO_DEMO_DATA: ${DEMO_DATA}" >> docker-compose.yml'
+  - 'echo "      ODOO_CONF_WORKERS: 1" >> docker-compose.yml'
+  - 'echo "    labels:" >> docker-compose.yml'
+  - 'echo "      - \"traefik.frontend.rule=Host:${URL}\"" >> docker-compose.yml'
+  - 'echo "    networks:" >> docker-compose.yml'
+  - 'echo "      - db" >> docker-compose.yml'
+  - 'echo "      - odoo" >> docker-compose.yml'
+  - 'echo "  db:" >> docker-compose.yml'
+  - 'echo "    image: ${POSTGRES_IMAGE}" >> docker-compose.yml'
+  - 'echo "    environment:" >> docker-compose.yml'
+  - 'echo "      - POSTGRES_DB=postgres" >> docker-compose.yml'
+  - 'echo "      - POSTGRES_PASSWORD=${DB_PSWD}" >> docker-compose.yml'
+  - 'echo "      - POSTGRES_USER=${DB_USER}" >> docker-compose.yml'
+  - 'echo "    networks:" >> docker-compose.yml'
+  - 'echo "      - db" >> docker-compose.yml'
+  - 'echo "" >> docker-compose.yml'
+  - 'echo "networks:" >> docker-compose.yml'
+  - 'echo "  db:" >> docker-compose.yml'
+  - 'echo "  odoo:" >> docker-compose.yml'
+  - 'echo "    external: true" >> docker-compose.yml'
+  - 'echo "" >> docker-compose.yml'
+  - 'cat docker-compose.yml'
+
+
+.job_template: &job_definition
+  stage: Deploy
+  when: manual
+  image: docker/compose
+  except:
+    - schedules
+  before_script:
+    - export TAG="${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}_${CI_PIPELINE_IID}"
+    - export CONTAINER="${GITLAB_USER_LOGIN}_${CI_PROJECT_PATH_SLUG}_${CI_COMMIT_REF_SLUG}"
+    - export URL="${CONTAINER}.docker.myidealis.be"
+    - *docker_compose_yml
+  script:
+    - 'echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
+    - 'docker-compose -p ${CONTAINER} up -d'
+  after_script:
+    - 'rm docker-compose.yml'
+  environment:
+    name: review/${CI_COMMIT_REF_NAME}
+    url: https://${GITLAB_USER_LOGIN}_${CI_PROJECT_PATH_SLUG}_${CI_COMMIT_REF_SLUG}.docker.myidealis.be
+    on_stop: "remove container"
+    auto_stop_in: 1 week
+  allow_failure: false
+
+
+deploy with empty db:
+  <<: *job_definition
+  variables:
+    <<: *job_definition_variables
+    POSTGRES_IMAGE: "postgres:11"
+    DEMO_DATA: 0
+
+
+deploy with demo data:
+  <<: *job_definition
+  variables:
+    <<: *job_definition_variables
+    POSTGRES_IMAGE: "postgres:11"
+    DEMO_DATA: 1
+
+
+remove container:
+  <<: *job_definition
+  stage: Destroy
+  script:
+    - 'echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
+    - 'docker-compose -p ${CONTAINER} down'
+  variables:
+    <<: *job_definition_variables
+    POSTGRES_IMAGE: "postgres:11"
+    DEMO_DATA: 1
+    GIT_STRATEGY: none
+  environment:
+    name: review/${CI_COMMIT_REF_NAME}
+    url: https://${GITLAB_USER_LOGIN}_${CI_PROJECT_PATH_SLUG}_${CI_COMMIT_REF_SLUG}.docker.myidealis.be
+    action: stop

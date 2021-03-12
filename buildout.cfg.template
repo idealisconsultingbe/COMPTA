@@ -1,0 +1,67 @@
+########################################################################
+# USAGE
+########################################################################
+#
+# See readme.md
+#
+########################################################################
+
+[buildout]
+parts = directories odoo
+versions = versions
+find-links =
+
+extensions = gp.vcsdevelop
+develop-dir = ./develop-src
+vcs-extend-develop = git+https://github.com/anybox/anybox.recipe.odoo#egg=anybox.recipe.odoo
+vcs-update = True
+parts-directory = parts
+develop-eggs-directory = .buildout/develop-eggs
+eggs-directory = .buildout/eggs
+installed = .buildout/.installed.cfg
+develop-dir = .buildout/develop-src
+odoo-downloads-directory = .buildout/downloads
+abi-tag-eggs = true
+
+[directories]
+recipe = z3c.recipe.mkdir
+paths = ${buildout:parts-directory}/community
+        ${buildout:parts-directory}/idealis
+
+[odoo]
+recipe = anybox.recipe.odoo:server
+version = git https://github.com/odoo/odoo.git odoo 14.0 depth=1
+keep-addons-order = True
+apply-requirements-file = False
+with_upgrade = False
+git-depth = 1
+
+community-directory = ${buildout:parts-directory}/community
+idealis-directory = ${buildout:parts-directory}/idealis
+
+addons = local ./project_addons/
+         git git@github.com:odoo/enterprise.git ${buildout:parts-directory}/odoo/addons-enterprise 14.0
+         git https://github.com/OCA/server-ux.git ${odoo:community-directory}/addons-oca-server-ux 14.0
+         git https://github.com/OCA/web.git ${odoo:community-directory}/addons-oca-web 14.0
+         git https://github.com/OCA/website.git ${odoo:community-directory}/addons-oca-website 14.0
+         
+
+eggs = PyPDF
+       vobject
+       qrcode
+       pyldap
+       num2words
+       gevent
+       greenlet
+       psycogreen
+       babel
+       PyPDF2
+       phonenumbers
+       unidecode
+       cachetools
+       firebase_admin
+
+
+[versions]
+pip=9.0.3
+cachetools>=2.1.0

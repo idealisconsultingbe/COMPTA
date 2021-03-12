@@ -1,0 +1,15 @@
+PyPDF
+vobject
+qrcode
+pyldap
+num2words
+gevent
+greenlet
+psycogreen
+babel
+PyPDF2
+phonenumbers==8.10.3
+unidecode
+xlrd
+cachetools>=2.1.0
+firebase_admin

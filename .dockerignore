@@ -1,0 +1,17 @@
+.git/
+.buildout/
+bin/
+/develop-eggs/
+/develop-src/
+/downloads/
+/eggs/
+/etc/
+/parts/
+/py36/
+/sources/
+/venv/
+.installed.cfg
+.gitignore
+buildout.cfg
+README.md
+upgrade.py

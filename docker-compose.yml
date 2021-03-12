@@ -1,0 +1,25 @@
+version: '3.4'
+services:
+  odoo:
+    image: appserver_template:14.0
+    depends_on:
+      - db
+    ports:
+      - "8069"
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_SSL_MODE: prefer
+      ODOO_INSTALL: 0
+      ODOO_CONF_WORKERS: 1
+    volumes:
+      - "./parts:/opt/odoo/parts"
+      - "./project_addons:/opt/odoo/project_addons"
+  db:
+    image: postgres:11
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo
