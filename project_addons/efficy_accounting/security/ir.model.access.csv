@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_efficy_invoice_attachment,access_efficy_invoice_attachment,model_efficy_invoice_attachment,base.group_user,1,1,1,1

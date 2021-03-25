@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_efficy_mapping_model,access_efficy_mapping_model,model_efficy_mapping_model,group_efficy_admin,1,1,1,1
+access_efficy_mapping_field,access_efficy_mapping_field,model_efficy_mapping_field,group_efficy_admin,1,1,1,1
+access_efficy_category,access_efficy_category,model_efficy_category,group_efficy_admin,1,1,1,1
+access_efficy_detail,access_efficy_detail,model_efficy_detail,group_efficy_admin,1,1,1,1
+access_efficy_pull_wizard,access_efficy_pull_wizard,model_efficy_pull_wizard,base.group_user,1,1,1,1
+access_efficy_pull_wizard_record,access_efficy_pull_wizard_record,model_efficy_pull_wizard_record,base.group_user,1,1,1,1
+access_efficy_mapping_selection,access_efficy_mapping_selection,model_efficy_mapping_selection,base.group_user,1,1,1,1
+access_efficy_sync_log,access_efficy_sync_log,model_efficy_sync_log,base.group_user,1,1,1,1

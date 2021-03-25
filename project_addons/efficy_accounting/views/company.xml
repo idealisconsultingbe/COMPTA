@@ -1,0 +1,31 @@
+<odoo>
+
+    <record id="view_res_company_form" model="ir.ui.view">
+        <field name="name">efficy.view.res.company.form</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Efficy Accounting">
+                    <group>
+                        <group>
+                            <field name="efficy_code"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_res_company_tree" model="ir.ui.view">
+        <field name="name">efficy.view.res.company.tree</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="efficy_code"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

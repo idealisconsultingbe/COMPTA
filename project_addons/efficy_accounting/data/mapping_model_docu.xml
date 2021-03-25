@@ -1,0 +1,268 @@
+<odoo>
+
+
+    <record id="efficy_mapping_model_customer_invoices" model="efficy.mapping.model">
+        <field name="name">Customer Invoices</field>
+        <field name="odoo_model_name">account.move</field>
+        <field name="efficy_entity">Docu</field>
+    </record>
+
+    <record id="efficy_category_docu_invoicing" model="efficy.category">
+        <field name="name">DOCU$INVOICING</field>
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+    </record>
+
+    <record id="efficy_detail_docu_comp" model="efficy.detail">
+        <field name="name">Comp</field>
+        <field name="odoo_model_name">res.partner</field>
+        <field name="odoo_relation_field" ref="account.field_account_move__partner_id"/>
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+    </record>
+
+<!--    <record id="efficy_detail_docu_prod" model="efficy.detail">-->
+<!--        <field name="name">Prod</field>-->
+<!--        <field name="odoo_model_name">account.move.line</field>-->
+<!--        <field name="odoo_relation_field" ref="account.field_account_move__invoice_line_ids"/>-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>-->
+<!--    </record>-->
+
+    <record id="efficy_detail_docu_file" model="efficy.detail">
+        <field name="name">File</field>
+        <field name="odoo_model_name">efficy.invoice.attachment</field>
+        <field name="odoo_relation_field" ref="efficy_accounting.field_account_move__efficy_attachment_ids"/>
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+    </record>
+
+    <record id="efficy_mapping_field_1" model="efficy.mapping.field">
+        <field name="efficy_field_name">K_DOCUMENT</field>
+        <field name="efficy_field_label">Key</field>
+        <field name="odoo_field" ref="efficy_accounting.field_account_move__efficy_key"/>
+        <field name="mapping_function">copy</field>
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="sequence">1</field>
+    </record>
+
+    <record id="efficy_mapping_field_1a" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">REFERENCE</field>
+<!--        <field name="mapping_regex">^(?!INV)-.*-.*-.*</field>-->
+        <field name="mapping_regex">^(?!(INV|IINV|EXP)-.*-.*-.*)</field>
+        <field name="mapping_function">skip</field>
+        <field name="sequence">1</field>
+    </record>
+
+    <record id="efficy_mapping_field_1b" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">REFERENCE</field>
+        <field name="mapping_regex">.*-.*-(.*)-.*</field>
+        <field name="mapping_selection_ids" eval="[
+        (5, 0, 0),
+        (0, 0, {'efficy_value': 'BE', 'odoo_value': '13'}),
+        (0, 0, {'efficy_value': 'FR', 'odoo_value': '2'}),
+        (0, 0, {'efficy_value': 'LU', 'odoo_value': '6'}),
+        (0, 0, {'efficy_value': 'NL', 'odoo_value': '3'}),
+        (0, 0, {'efficy_value': 'DE', 'odoo_value': '4'}),
+        (0, 0, {'efficy_value': 'CH', 'odoo_value': '5'}),
+        (0, 0, {'efficy_value': 'ES', 'odoo_value': '7'}),
+        (0, 0, {'efficy_value': 'IE', 'odoo_value': '11'}),
+        (0, 0, {'efficy_value': 'IS', 'odoo_value': '10'}),
+        (0, 0, {'efficy_value': 'ED', 'odoo_value': '8'}),
+        (0, 0, {'efficy_value': 'IN', 'odoo_value': '12'}),
+        (0, 0, {'efficy_value': 'SU', 'odoo_value': '9'}),
+        (0, 0, {'efficy_value': False, 'odoo_value': '1'}),
+        ]"/>
+        <field name="mapping_function">env</field>
+        <field name="mapping_parameter">company</field>
+        <field name="sequence">0</field>
+    </record>
+
+<!--    todo : magic numbers selection_ids not working-->
+    <record id="efficy_mapping_field_2" model="efficy.mapping.field">
+        <field name="efficy_field_name">REFERENCE</field>
+        <field name="efficy_field_label">Reference</field>
+        <field name="odoo_field" ref="account.field_account_move__move_type"/>
+        <field name="mapping_regex">(.*)-.*-.*-.*</field>
+        <field name="mapping_selection_ids" eval="[
+        (5, 0, 0),
+        (0, 0, {'efficy_value': '^INV$', 'odoo_value': 'out_invoice'}),
+        (0, 0, {'efficy_value': '^IINV$', 'odoo_value': 'in_invoice'}),
+        (0, 0, {'efficy_value': '^EXP$', 'odoo_value': 'in_invoice'}),
+        (0, 0, {'efficy_value': False, 'odoo_value': 'entry'}),
+        ]"/>
+        <field name="mapping_function">copy</field>
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_12" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">REFERENCE</field>
+        <field name="odoo_field" ref="efficy_accounting.field_account_move__efficy_reference"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_7" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">R_F_INVOICE_STATUS</field>
+        <field name="efficy_category_id" ref="efficy_category_docu_invoicing"/>
+        <field name="odoo_field" ref="efficy_accounting.field_account_move__approbation_status"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_3" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">K_COMPANY</field>
+        <field name="efficy_detail_id" ref="efficy_detail_docu_comp"/>
+        <field name="odoo_field" ref="efficy_accounting.field_res_partner__efficy_key"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_4" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">NAME</field>
+        <field name="efficy_detail_id" ref="efficy_detail_docu_comp"/>
+        <field name="odoo_field" ref="base.field_res_partner__name"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_4b" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_detail_id" ref="efficy_detail_docu_comp"/>
+        <field name="odoo_field" ref="base.field_res_partner__company_type"/>
+        <field name="mapping_function">default</field>
+        <field name="mapping_parameter">company</field>
+        <field name="sequence">1</field>
+    </record>
+<!--    <record id="efficy_mapping_field_5" model="efficy.mapping.field">-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>-->
+<!--        <field name="efficy_field_name">R_FAMILY</field>-->
+<!--        <field name="efficy_detail_id" ref="efficy_detail_docu_prod"/>-->
+<!--        <field name="odoo_field" ref="account.field_account_move_line__name"/>-->
+<!--        <field name="mapping_function">copy</field>-->
+<!--    </record>-->
+<!--    <record id="efficy_mapping_field_6" model="efficy.mapping.field">-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>-->
+<!--        <field name="efficy_field_name">R_FAMILY</field>-->
+<!--        <field name="efficy_detail_id" ref="efficy_detail_docu_prod"/>-->
+<!--        <field name="odoo_field" ref="account.field_account_move_line__analytic_account_id"/>-->
+<!--&lt;!&ndash;        <field name="mapping_function">name_create</field>&ndash;&gt;-->
+<!--        <field name="mapping_function">create</field>-->
+<!--        <field name="mapping_parameter">name</field>-->
+<!--    </record>-->
+<!--    <record id="efficy_mapping_field_8" model="efficy.mapping.field">-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>-->
+<!--        <field name="efficy_field_name">F_D_E_RECO</field>-->
+<!--        <field name="efficy_detail_id" ref="efficy_detail_docu_prod"/>-->
+<!--        <field name="odoo_field" ref="efficy_accounting.field_account_move_line__end_recognition_date"/>-->
+<!--        <field name="mapping_function">copy</field>-->
+<!--    </record>-->
+<!--    <record id="efficy_mapping_field_9" model="efficy.mapping.field">-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>-->
+<!--        <field name="efficy_field_name">F_D_S_RECO</field>-->
+<!--        <field name="efficy_detail_id" ref="efficy_detail_docu_prod"/>-->
+<!--        <field name="odoo_field" ref="efficy_accounting.field_account_move_line__start_recognition_date"/>-->
+<!--        <field name="mapping_function">copy</field>-->
+<!--    </record>-->
+<!--    <record id="efficy_mapping_field_10" model="efficy.mapping.field">-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>-->
+<!--        <field name="efficy_field_name">PRICE</field>-->
+<!--        <field name="efficy_detail_id" ref="efficy_detail_docu_prod"/>-->
+<!--        <field name="odoo_field" ref="account.field_account_move_line__price_unit"/>-->
+<!--        <field name="mapping_function">copy</field>-->
+<!--    </record>-->
+<!--    <record id="efficy_mapping_field_11" model="efficy.mapping.field">-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>-->
+<!--        <field name="efficy_field_name">QUANTITY</field>-->
+<!--        <field name="efficy_detail_id" ref="efficy_detail_docu_prod"/>-->
+<!--        <field name="odoo_field" ref="account.field_account_move_line__quantity"/>-->
+<!--        <field name="mapping_function">copy</field>-->
+<!--    </record>-->
+    <record id="efficy_mapping_field_13" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">D_INVOICE</field>
+        <field name="efficy_category_id" ref="efficy_category_docu_invoicing"/>
+        <field name="odoo_field" ref="account.field_account_move__invoice_date"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_14" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+<!--        <field name="efficy_field_name">D_DUE</field>-->
+        <field name="efficy_field_name">EXP_DATE</field>
+        <field name="efficy_category_id" ref="efficy_category_docu_invoicing"/>
+        <field name="odoo_field" ref="account.field_account_move__invoice_date_due"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_15" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">R_CURRCY</field>
+        <field name="efficy_category_id" ref="efficy_category_docu_invoicing"/>
+        <field name="odoo_field" ref="account.field_account_move__currency_id"/>
+        <field name="mapping_function">search</field>
+        <field name="mapping_parameter">[('name', '=', data)]</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_16" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">PATH</field>
+        <field name="efficy_detail_id" ref="efficy_detail_docu_file"/>
+        <field name="odoo_field" ref="efficy_accounting.field_efficy_invoice_attachment__data_filename"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_17" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">VERSION</field>
+        <field name="efficy_detail_id" ref="efficy_detail_docu_file"/>
+        <field name="odoo_field" ref="efficy_accounting.field_efficy_invoice_attachment__version"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+    <record id="efficy_mapping_field_18" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_field_name">K_FILE</field>
+        <field name="efficy_detail_id" ref="efficy_detail_docu_file"/>
+        <field name="odoo_field" ref="efficy_accounting.field_efficy_invoice_attachment__efficy_key"/>
+        <field name="mapping_function">copy</field>
+        <field name="sequence">1</field>
+    </record>
+<!--    <record id="efficy_mapping_field_19" model="efficy.mapping.field">-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>-->
+<!--        <field name="efficy_field_name">K_DOCUMENT</field>-->
+<!--        <field name="odoo_field" ref="account.field_account_move__invoice_line_ids"/>-->
+<!--        <field name="mapping_function">get_move_line</field>-->
+<!--        <field name="sequence">1</field>-->
+<!--    </record>-->
+
+    <record id="efficy_mapping_field_20" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="efficy_detail_id" ref="efficy_detail_docu_comp"/>
+        <field name="odoo_field" ref="efficy_accounting.field_res_partner__efficy_mapping_model_id"/>
+        <field name="mapping_function">default</field>
+        <field name="mapping_parameter">2</field>
+    </record>
+
+    <record id="efficy_mapping_field_21" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="odoo_field" ref="account.field_account_move__journal_id"/>
+        <field name="efficy_field_name">REFERENCE</field>
+        <field name="mapping_regex">(.*)-.*-.*-.*</field>
+        <field name="mapping_selection_ids" eval="[
+        (5, 0, 0),
+        (0, 0, {'efficy_value': '^INV$', 'odoo_value': 'sale'}),
+        (0, 0, {'efficy_value': '^IINV$', 'odoo_value': 'purchase'}),
+        (0, 0, {'efficy_value': '^EXP$', 'odoo_value': 'purchase'}),
+        (0, 0, {'efficy_value': False, 'odoo_value': 'entry'}),
+        ]"/>
+        <field name="mapping_function">search</field>
+        <field name="mapping_parameter">[('type', '=', data)]</field>
+    </record>
+
+    <record id="efficy_mapping_field_22" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_customer_invoices"/>
+        <field name="odoo_field" ref="account.field_account_move__payment_reference"/>
+        <field name="efficy_field_name">COMMUNICATION</field>
+        <field name="mapping_function">copy</field>
+    </record>
+
+</odoo>

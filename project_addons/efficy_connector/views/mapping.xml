@@ -1,0 +1,173 @@
+<odoo>
+
+    <record id="view_efficy_mapping_model_tree" model="ir.ui.view">
+        <field name="name">view.efficy.mapping.model.tree</field>
+        <field name="model">efficy.mapping.model</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="display_name"/>
+                <field name="efficy_entity"/>
+                <field name="odoo_model_name"/>
+                <field name="company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_efficy_mapping_model_form" model="ir.ui.view">
+        <field name="name">view.efficy.mapping.model.form</field>
+        <field name="model">efficy.mapping.model</field>
+        <field name="arch" type="xml">
+            <form>
+
+                <sheet>
+
+                    <header>
+<!--                        <button name="fetch_fields" string="Fetch Fields" type="object" class="oe_highlight" />-->
+                        <button name="action_pull_records" string="Pull Records" type="object" class="oe_highlight" />
+                        <button name="action_pull_all_records" string="Pull all Records" type="object"/>
+                    </header>
+
+                    <div class="oe_title">
+                        <h1><field name="display_name"/></h1>
+                    </div>
+
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="odoo_model_name"/>
+                            <field name="efficy_entity"/>
+                            <field name="efficy_category_ids" widget="many2many_tags"/>
+                            <field name="company_id"/>
+                        </group>
+                        <group>
+                            <field name="efficy_detail_ids">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="odoo_model_name"/>
+                                    <field name="parent_odoo_model_name" invisible="1"/>
+                                    <field name="odoo_relation_field"
+                                           domain="[('model', '=', parent_odoo_model_name), ('relation', '=', odoo_model_name)]"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </group>
+
+                    <field name="mapping_field_ids" domain="[('active', '=', False)]">
+                        <tree>
+                            <field name="id" optional="hide"/>
+                            <field name="sequence" widget="handle"/>
+                            <field name="active"/>
+                            <field name="efficy_category_id"/>
+                            <field name="efficy_detail_id"/>
+                            <field name="efficy_field_name"/>
+                            <field name="efficy_field_label" optional="hide"/>
+                            <field name="efficy_field_type" optional="hide"/>
+                            <field name="odoo_model_name" optional="hide"/>
+                            <field name="odoo_field" domain="[('model', '=', odoo_model_name)]"/>
+                            <field name="mapping_summary"/>
+                        </tree>
+                        <form>
+                            <group string="debug">
+                                <group>
+                                    <field name="mapping_model_id"/>
+<!--                                    <field name="parent_detail_ids"/>-->
+                                </group>
+                            </group>
+                            <group string="Efficy field">
+                                <group>
+                                    <field name="efficy_category_id"/>
+                                    <field name="efficy_detail_id"/>
+                                </group>
+                                <group>
+                                    <field name="efficy_field_name"/>
+                                    <field name="efficy_field_label"/>
+                                    <field name="efficy_field_type"/>
+                                </group>
+                            </group>
+                            <group string="Odoo field">
+                                <group>
+                                    <field name="odoo_model_name" optional="hide"/>
+                                </group>
+                                <group>
+                                    <field name="odoo_field" domain="[('model', '=', odoo_model_name)]"/>
+                                </group>
+                            </group>
+                            <group string="Translation mapping">
+                                <field name="mapping_regex"/>
+                                <field name="mapping_selection_ids">
+                                    <tree editable="bottom">
+                                        <field name="efficy_value"/>
+                                        <field name="odoo_value"/>
+                                    </tree>
+                                </field>
+                                <field name="mapping_function"/>
+                                <field name="mapping_parameter"/>
+                            </group>
+                        </form>
+                    </field>
+
+                </sheet>
+
+            </form>
+        </field>
+    </record>
+
+    <record id="view_efficy_sync_log_tree" model="ir.ui.view">
+        <field name="name">view.efficy.sync.log.tree</field>
+        <field name="model">efficy.sync.log</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="sync_date"/>
+                <field name="sync_sequence"/>
+                <field name="sync_message"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_efficy_sync_log_form" model="ir.ui.view">
+        <field name="name">view.efficy.sync.log.form</field>
+        <field name="model">efficy.sync.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+
+                    <group>
+                        <group>
+                            <field name="sync_date"/>
+                            <field name="sync_status"/>
+                            <field name="sync_sequence"/>
+                        </group>
+                        <group>
+                            <field name="efficy_entity"/>
+                            <field name="efficy_key"/>
+                        </group>
+                    </group>
+                    <field name="sync_message"/>
+                    <group>
+                        <field name="sync_data"/>
+                    </group>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="action_efficy_mapping_model">
+        <field name="name">Efficy Mapping Model</field>
+        <field name="res_model">efficy.mapping.model</field>
+    </record>
+    <record model="ir.actions.act_window" id="action_efficy_sync_log">
+        <field name="name">Efficy Sync Logs</field>
+        <field name="res_model">efficy.sync.log</field>
+    </record>
+
+<!--    <record model="ir.actions.act_window" id="action_efficy_entity">-->
+<!--        <field name="name">Efficy entities</field>-->
+<!--        <field name="res_model">efficy.entity</field>-->
+<!--    </record>-->
+
+    <menuitem id="menu_efficy_connector_main" groups="efficy_connector.group_efficy_admin"/>
+<!--    <menuitem id="menu_efficy_mapping_model" parent="menu_efficy_connector_main" action="action_efficy_mapping_model"/>-->
+    <menuitem id="menu_efficy_sync_log" parent="menu_efficy_connector_main" action="action_efficy_sync_log"/>
+
+</odoo>

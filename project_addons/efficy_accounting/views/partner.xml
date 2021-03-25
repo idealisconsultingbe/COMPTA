@@ -1,0 +1,34 @@
+<odoo>
+
+    <record id="view_partner_tree" model="ir.ui.view">
+        <field name="name">efficy.res.partner.tree</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="efficy_ref"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_partner_from" model="ir.ui.view">
+        <field name="name">efficy.res.partner.form</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('oe_title')]" position="inside">
+                <field name="efficy_ref"/>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Efficy connector">
+                    <group>
+                        <field name="efficy_mapping_model_id"/>
+                        <field name="efficy_entity"/>
+                        <field name="efficy_key"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,119 @@
+<odoo>
+
+    <record id="efficy_mapping_model_companies" model="efficy.mapping.model">
+        <field name="name">Companies</field>
+        <field name="odoo_model_name">res.partner</field>
+        <field name="efficy_entity">Comp</field>
+    </record>
+
+    <record id="efficy_category_comp_bankinfo" model="efficy.category">
+        <field name="name">COMP$BANKINFO</field>
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_1" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">K_COMPANY</field>
+        <field name="odoo_field" ref="efficy_accounting.field_res_partner__efficy_key"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_2" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">F_IBAN</field>
+        <field name="odoo_field" ref="base.field_res_partner__bank_ids"/>
+        <field name="efficy_category_id" ref="efficy_category_comp_bankinfo"/>
+        <field name="mapping_function">create</field>
+        <field name="mapping_parameter">acc_number</field>
+    </record>
+
+<!--    <record id="efficy_mapping_field_comp_3" model="efficy.mapping.field">-->
+<!--        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>-->
+<!--        <field name="efficy_field_name">R_LEGALKIND</field>-->
+<!--        <field name="odoo_field" ref="efficy_accounting.field_res_partner__legal_form"/>-->
+<!--    </record>-->
+
+    <record id="efficy_mapping_field_comp_4" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">VAT</field>
+        <field name="odoo_field" ref="base.field_res_partner__vat"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_5" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">NAME</field>
+        <field name="odoo_field" ref="base.field_res_partner__name"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_6" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">TAGS</field>
+        <field name="odoo_field" ref="base.field_res_partner__category_id"/>
+        <field name="mapping_function">create</field>
+        <field name="mapping_parameter">name</field>
+    </record>
+
+    <record id="efficy_mapping_field_comp_7" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">PHONE1</field>
+        <field name="odoo_field" ref="base.field_res_partner__phone"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_8" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">PHONE2</field>
+        <field name="odoo_field" ref="base.field_res_partner__mobile"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_9" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">EMAIL1</field>
+        <field name="odoo_field" ref="base.field_res_partner__email"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_10" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">WEB1</field>
+        <field name="odoo_field" ref="base.field_res_partner__website"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_11" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">BUILDING</field>
+        <field name="odoo_field" ref="base.field_res_partner__street2"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_12" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">STREET</field>
+        <field name="odoo_field" ref="base.field_res_partner__street"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_13" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">POSTCODE</field>
+        <field name="odoo_field" ref="base.field_res_partner__zip"/>
+    </record>
+
+    <record id="efficy_mapping_field_comp_14" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">R_COUNTRY</field>
+        <field name="odoo_field" ref="base.field_res_partner__country_id"/>
+        <field name="mapping_function">create</field>
+        <field name="mapping_parameter">name</field>
+    </record>
+
+    <record id="efficy_mapping_field_comp_15" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">STATE</field>
+        <field name="odoo_field" ref="base.field_res_partner__state_id"/>
+        <field name="mapping_function">search</field>
+        <field name="mapping_parameter">[('name', '=', data)]</field>
+    </record>
+
+    <record id="efficy_mapping_field_comp_16" model="efficy.mapping.field">
+        <field name="mapping_model_id" ref="efficy_mapping_model_companies"/>
+        <field name="efficy_field_name">S_CITY</field>
+        <field name="odoo_field" ref="base.field_res_partner__city"/>
+    </record>
+
+</odoo>
