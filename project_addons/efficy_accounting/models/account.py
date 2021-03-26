@@ -113,10 +113,9 @@ class AccountMove(models.Model):
 
         class Log():
 
-            messages = []
-            status = False
-
-            def __init__(self, date, sequence, entity, key, data):
+            def reset(self, date, sequence, entity, key, data):
+                self.messages = []
+                self.status = False
                 self.date = date
                 self.sequence = sequence
                 self.entity = entity
@@ -196,6 +195,7 @@ class AccountMove(models.Model):
         companies = {company_id.efficy_code: company_id for company_id in self.env['res.company'].search([])}
         currencies = {currency_id.name: currency_id for currency_id in self.env['res.currency'].search([])}
         countries = {country_id.code: country_id for country_id in self.env['res.country'].search([])}
+        log = Log()
 
         i = 0
         start_loop = time()
@@ -212,7 +212,7 @@ class AccountMove(models.Model):
                 _logger.warning("Processing limit reached, stopping")
                 break
 
-            log = Log(date=sync_date, sequence=sync_sequence, entity='Docu', key=d.get('K_DOCUMENT'), data=json.dumps(d, indent=2))
+            log.reset(date=sync_date, sequence=sync_sequence, entity='Docu', key=d.get('K_DOCUMENT'), data=json.dumps(d, indent=2))
 
             record = self.search([('efficy_entity', '=', 'Docu'), ('efficy_key', '=', d['K_DOCUMENT'])])
 
@@ -377,8 +377,8 @@ class AccountMove(models.Model):
                     'analytic_tag_ids': analytic_default.analytic_tag_ids.ids,
                     'end_recognition_date': d['F_D_E_RECO'] if d['F_D_E_RECO'] not in ['30/12/1899', '1899-12-30'] else d['D_INVOICE'],
                     'start_recognition_date': d['F_D_S_RECO'] if d['F_D_S_RECO'] not in ['30/12/1899', '1899-12-30'] else d['D_INVOICE'],
-                    'quantity': d['QUANTITY'],
-                    'discount': d['DISCOUNT'],
+                    'quantity': d['QUANTITY'] * d.get('F_MULTIPLIER', 100)/100,
+                    'discount': d.get('DISCOUNT', 0),
                     'price_unit': d['PRICE'],
                     'tax_ids': tax_ids,
                 }
@@ -438,7 +438,8 @@ class AccountMove(models.Model):
 
         # processed_records.filtered(lambda x: x.amount_total < 0 and record.move_type in ['out_invoice', 'in_invoice']).action_switch_invoice_into_refund_credit_note(inverse=False)
 
-        self.env.company.efficy_last_sync_date = sync_date
+        if date_from:
+            self.env.company.efficy_last_sync_date = sync_date
         self.env['efficy.sync.log'].create(log_vals_batch)
         _logger.info("All done")
         return processed_records
