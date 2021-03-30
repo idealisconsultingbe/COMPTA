@@ -4,6 +4,7 @@ from time import time
 import logging
 import requests
 import json
+import math
 
 _logger = logging.getLogger(__name__)
 
@@ -377,9 +378,9 @@ class AccountMove(models.Model):
                     'analytic_tag_ids': analytic_default.analytic_tag_ids.ids,
                     'end_recognition_date': d['F_D_E_RECO'] if d['F_D_E_RECO'] not in ['30/12/1899', '1899-12-30'] else d['D_INVOICE'],
                     'start_recognition_date': d['F_D_S_RECO'] if d['F_D_S_RECO'] not in ['30/12/1899', '1899-12-30'] else d['D_INVOICE'],
-                    'quantity': d['QUANTITY'] * d.get('F_MULTIPLIER', 100)/100,
+                    'quantity': d['QUANTITY'],
                     'discount': d.get('DISCOUNT', 0),
-                    'price_unit': d['PRICE'],
+                    'price_unit': math.ceil(d['PRICE'] * d.get('F_MULTIPLIER', 100))/100,
                     'tax_ids': tax_ids,
                 }
 
