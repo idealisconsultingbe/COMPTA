@@ -49,80 +49,12 @@ class EfficySyncLog(models.Model):
     sync_sequence = fields.Char()
     sync_date = fields.Datetime()
     sync_batch = fields.Char()
-    sync_status = fields.Selection([('processing', "Processing"), ('skipped', "Skipped"), ('failed', "Failed"), ('warning', "Warning"), ('success', "Success")])
+    sync_status = fields.Selection([('processing', "Processing"), ('skipped', "Skipped"), ('failed', "Failed"), ('warning', "Warning"), ('success', "Success"), ('error', 'Error')])
     sync_message = fields.Html(default='')
     sync_data = fields.Text()
+    sync_raw_data = fields.Text()
     res_model = fields.Char()
     res_id = fields.Integer()
     efficy_entity = fields.Char()
     efficy_key = fields.Char()
 
-    def skipped(self, in_vals, message):
-        vals = in_vals
-        vals['sync_status'] = 'skipped'
-        vals['sync_message'] = in_vals['sync_message'] + message + "\n"
-        return vals
-        # _logger.info(message)
-
-    def error(self, in_vals, message):
-        vals = in_vals
-        vals['sync_status'] = 'failed'
-        vals['sync_message'] = in_vals['sync_message'] + message + "\n"
-        yield vals
-        raise UserError(message)
-
-    def warning(self, in_vals, message):
-        vals = in_vals
-        vals['sync_status'] = 'warning'
-        vals['sync_message'] = in_vals['sync_message'] + message + "\n"
-        return vals
-        # _logger.warning(message)
-
-    def info(self, in_vals, message):
-        vals = in_vals
-        vals['sync_message'] = in_vals['sync_message'] + message + "\n"
-        return vals
-
-    def success(self, in_vals):
-        vals = in_vals
-        vals['sync_status'] = 'success' if vals['sync_status'] == 'processing' else vals['sync_status']
-        return vals
-
-    def failed(self, in_vals, message):
-        vals = in_vals
-        vals['sync_status'] = 'failed'
-        vals['sync_message'] = in_vals['sync_message'] + message + "\n"
-        _logger.warning(message)
-        return vals
-
-    # def skipped(self, message):
-    #     for rec in self:
-    #         rec.sync_status = 'skipped'
-    #         rec.sync_message += message + "\n"
-    #         # _logger.info(message)
-    #
-    # def error(self, message):
-    #     for rec in self:
-    #         rec.sync_status = 'failed'
-    #         rec.sync_message += message + "\n"
-    #         raise UserError(message)
-    #
-    # def warning(self, message):
-    #     for rec in self:
-    #         rec.sync_status = 'warning'
-    #         rec.sync_message += message + "\n"
-    #         # _logger.warning(message)
-    #
-    # def info(self, message):
-    #     for rec in self:
-    #         rec.sync_message += message + "\n"
-    #
-    # def success(self):
-    #     for rec in self:
-    #         rec.sync_status = 'success' if rec.sync_status == 'processing' else rec.sync_status
-    #
-    # def failed(self, message):
-    #     for rec in self:
-    #         rec.sync_status = 'failed'
-    #         rec.sync_message += message + "\n"
-    #         _logger.warning(message)

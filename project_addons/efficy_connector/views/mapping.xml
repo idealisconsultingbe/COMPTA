@@ -146,6 +146,9 @@
                     <group>
                         <field name="sync_data"/>
                     </group>
+                    <group>
+                        <field name="sync_raw_data"/>
+                    </group>
 
                 </sheet>
             </form>
