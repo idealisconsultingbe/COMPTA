@@ -341,25 +341,24 @@ class AccountMove(models.Model):
                     log.error("Account deprecated: %s" % account_id.read(['name', 'code', 'company_id']))
                     raise UserError("Account deprecated: %s\n" % account_id.read(['name', 'code', 'company_id']))
 
-                # default_tax_ids = account_id.tax_ids
-                # fiscal_position_id = self.with_company(company_id.id).env[
-                #     'account.fiscal.position'].get_fiscal_position(partner_id.id)
-                # tax_ids = fiscal_position_id.map_tax(default_tax_ids)
-                # tax_account_ids = tax_ids.invoice_repartition_line_ids.account_id
-                #
-                # if any(tax_account_ids.mapped('deprecated')):
-                #     record.efficy_sync_status = 'failed'
-                #     log.error("Account deprecated on tax repartition: %s" % tax_account_ids.read(
-                #         ['name', 'code', 'company_id']))
-                #     raise UserError("Account deprecated on tax repartition: %s\n" % tax_account_ids.read(
-                #         ['name', 'code', 'company_id']))
-                #
-                # log.info("- Default taxes : %s, fiscal position : %s, Using taxes : %s\n" % (
-                #     default_tax_ids.read(['id', 'name', 'type_tax_use', 'company_id']),
-                #     fiscal_position_id.read(['id', 'name', 'company_id']),
-                #     tax_ids.read(['id', 'name', 'type_tax_use', 'company_id'])
-                # ))
+                default_tax_ids = account_id.tax_ids
+                fiscal_position_id = self.with_company(company_id.id).env[
+                    'account.fiscal.position'].get_fiscal_position(partner_id.id)
+                tax_ids = fiscal_position_id.map_tax(default_tax_ids)
+                tax_account_ids = tax_ids.invoice_repartition_line_ids.account_id
 
+                if any(tax_account_ids.mapped('deprecated')):
+                    record.efficy_sync_status = 'failed'
+                    log.error("Account deprecated on tax repartition: %s" % tax_account_ids.read(
+                        ['name', 'code', 'company_id']))
+                    raise UserError("Account deprecated on tax repartition: %s\n" % tax_account_ids.read(
+                        ['name', 'code', 'company_id']))
+
+                log.info("- Default taxes : %s, fiscal position : %s, Using taxes : %s\n" % (
+                    default_tax_ids.read(['id', 'name', 'type_tax_use', 'company_id']),
+                    fiscal_position_id.read(['id', 'name', 'company_id']),
+                    tax_ids.read(['id', 'name', 'type_tax_use', 'company_id'])
+                ))
 
                 line_vals.append((0, 0, {
                     'name': d['COMMENT'],
@@ -371,7 +370,7 @@ class AccountMove(models.Model):
                     'quantity': d['QUANTITY'],
                     'discount': d.get('DISCOUNT', 0),
                     'price_unit': round(d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100, 2),
-                    # 'tax_ids': tax_ids,
+                    'tax_ids': tax_ids,
                 }))
 
             return line_vals
