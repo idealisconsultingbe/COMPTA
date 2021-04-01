@@ -1,22 +1,22 @@
 <odoo>
 
-    <record model="ir.actions.server" id="action_update_records_account_move">
-        <field name="name">Efficy : Update Invoices from Mapping model</field>
-        <field name="model_id" ref="account.model_account_move"/>
-        <field name="state">code</field>
-        <field name="code">
-            records.efficy_sync()
-        </field>
-    </record>
+<!--    <record model="ir.actions.server" id="action_update_records_account_move">-->
+<!--        <field name="name">Efficy : Update Invoices from Mapping model</field>-->
+<!--        <field name="model_id" ref="account.model_account_move"/>-->
+<!--        <field name="state">code</field>-->
+<!--        <field name="code">-->
+<!--            records.efficy_sync()-->
+<!--        </field>-->
+<!--    </record>-->
 
-    <record model="ir.actions.server" id="action_update_records_res_partner">
-        <field name="name">Efficy: Update Partners from Mapping model</field>
-        <field name="model_id" ref="base.model_res_partner"/>
-        <field name="state">code</field>
-        <field name="code">
-            records.efficy_sync()
-        </field>
-    </record>
+<!--    <record model="ir.actions.server" id="action_update_records_res_partner">-->
+<!--        <field name="name">Efficy: Update Partners from Mapping model</field>-->
+<!--        <field name="model_id" ref="base.model_res_partner"/>-->
+<!--        <field name="state">code</field>-->
+<!--        <field name="code">-->
+<!--            records.efficy_sync()-->
+<!--        </field>-->
+<!--    </record>-->
 
 
     <record model="ir.actions.server" id="action_efficy_sync_move_with_lines">
@@ -30,7 +30,7 @@ for rec in records:
     </record>
 
     <record id="ir_cron_efficy_sync_move_with_lines" model="ir.cron">
-        <field name="name">Efficy sync moves with lines</field>
+        <field name="name">Efficy: sync moves with lines</field>
         <field name="interval_number">1</field>
         <field name="interval_type">days</field>
         <field name="numbercall">-1</field>
@@ -44,19 +44,19 @@ for rec in records:
         <field name="state">code</field>
     </record>
 
-    <record id="ir_cron_efficy_sync_move_with_lines_skip" model="ir.cron">
-        <field name="name">Efficy sync moves with lines (Skip existing)</field>
-        <field name="interval_number">1</field>
-        <field name="interval_type">days</field>
-        <field name="numbercall">-1</field>
-        <field name="active" eval="False"/>
-        <field name="nextcall" eval="(DateTime.now().replace(hour=2, minute=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')" />
-        <field name="doall" eval="False"/>
-        <field name="model_id" ref="account.model_account_move"/>
-        <field name="code">
-            model.get_moves_with_lines(date_from=env.company.efficy_last_sync_date, noupdate=True)
-        </field>
-        <field name="state">code</field>
-    </record>
+<!--    <record id="ir_cron_efficy_sync_move_with_lines_skip" model="ir.cron">-->
+<!--        <field name="name">Efficy sync moves with lines (Skip existing)</field>-->
+<!--        <field name="interval_number">1</field>-->
+<!--        <field name="interval_type">days</field>-->
+<!--        <field name="numbercall">-1</field>-->
+<!--        <field name="active" eval="False"/>-->
+<!--        <field name="nextcall" eval="(DateTime.now().replace(hour=2, minute=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')" />-->
+<!--        <field name="doall" eval="False"/>-->
+<!--        <field name="model_id" ref="account.model_account_move"/>-->
+<!--        <field name="code">-->
+<!--            model.get_moves_with_lines(date_from=env.company.efficy_last_sync_date, noupdate=True)-->
+<!--        </field>-->
+<!--        <field name="state">code</field>-->
+<!--    </record>-->
 
 </odoo>
