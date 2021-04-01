@@ -119,7 +119,7 @@ class AccountMove(models.Model):
             dic = {}
             keys = []
 
-            fields_document = ['K_DOCUMENT', 'R_F_INVOICE_STATUS', 'REFERENCE', 'COMMUNICATION', 'D_INVOICE', 'EXP_DATE', 'R_CURRCY', 'TOTAL_WITH_VAT']
+            fields_document = ['K_DOCUMENT', 'R_F_INVOICE_STATUS', 'REFERENCE', 'COMMUNICATION', 'D_INVOICE', 'EXP_DATE', 'R_CURRCY', 'TOTAL_WITH_VAT', 'TOTAL_NO_VAT']
             fields_company = ['K_COMPANY', 'NAME_1', 'F_IBAN', 'STREET', 'COUNTRYSHORT', 'POSTCODE', 'CITY', 'EMAIL1']
             fields_relation = ['K_RELATION', 'COMMENT', 'QUANTITY', 'DISCOUNT', 'PRICE', 'F_MULTIPLIER', 'F_D_S_RECO', 'F_D_E_RECO', 'F_ACCOUNTING_TYPE', 'VAT_1']
             fields_file = ['K_FILE', 'VERSION']
@@ -360,6 +360,7 @@ class AccountMove(models.Model):
                 #     tax_ids.read(['id', 'name', 'type_tax_use', 'company_id'])
                 # ))
 
+
                 line_vals.append((0, 0, {
                     'name': d['COMMENT'],
                     'analytic_account_id': analytic_account.id,
@@ -471,8 +472,10 @@ class AccountMove(models.Model):
                 if record.amount_total < 0 and record.move_type in ['out_invoice', 'in_invoice']:
                     record.action_switch_invoice_into_refund_credit_note(inverse=False)
 
-                if round(record.amount_total, 4) != d['document']['TOTAL_NO_VAT']:
-                    log.error("Total %s does not match the one from Efficy : %s" % (record.amount_total, d['document']['TOTAL_NO_VAT']))
+                if round(record.amount_total, 4) == d['document']['TOTAL_WITH_VAT']:
+                    log.info("Total %s matches the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_NO_VAT']))
+                else:
+                    log.error("Total %s does not match the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_NO_VAT']))
 
                 processed_records |= record
                 log.done()
@@ -492,7 +495,6 @@ class AccountMove(models.Model):
 
                 failed_records |= record
                 log.failed(str(e))
-                import ipdb; ipdb.set_trace()
 
             finally:
                 log_vals_batch.append(log.get_create_vals())

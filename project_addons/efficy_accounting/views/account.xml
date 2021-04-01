@@ -105,4 +105,15 @@
         </field>
     </record>
 
+    <record id="view_account_invoice_filter" model="ir.ui.view">
+        <field name="name">account.invoice.select</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="." position="inside">
+                <field name="efficy_reference"/>
+            </xpath>
+        </field>
+    </record>
+
 </odoo>
