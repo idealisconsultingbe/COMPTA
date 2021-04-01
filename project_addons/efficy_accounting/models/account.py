@@ -369,7 +369,7 @@ class AccountMove(models.Model):
                     'start_recognition_date': d['F_D_S_RECO'] if d['F_D_S_RECO'] not in ['30/12/1899', '1899-12-30'] else invoice_date,
                     'quantity': d['QUANTITY'],
                     'discount': d.get('DISCOUNT', 0),
-                    'price_unit': round(d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100 * (1 + d['VAT_1']/100), 2),
+                    'price_unit': round(d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100, 2),
                     # 'tax_ids': tax_ids,
                 }))
 
@@ -471,8 +471,8 @@ class AccountMove(models.Model):
                 if record.amount_total < 0 and record.move_type in ['out_invoice', 'in_invoice']:
                     record.action_switch_invoice_into_refund_credit_note(inverse=False)
 
-                if round(record.amount_total, 4) != d['document']['TOTAL_WITH_VAT']:
-                    log.error("Total %s does not match the one from Efficy : %s" % (record.amount_total, d['document']['TOTAL_WITH_VAT']))
+                if round(record.amount_total, 4) != d['document']['TOTAL_NO_VAT']:
+                    log.error("Total %s does not match the one from Efficy : %s" % (record.amount_total, d['document']['TOTAL_NO_VAT']))
 
                 processed_records |= record
                 log.done()
