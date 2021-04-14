@@ -20,7 +20,8 @@ class EfficyIntegrationMixin(models.AbstractModel):
     @api.constrains('efficy_entity', 'efficy_key')
     def _verify_efficy_unique(self):
         self.sudo().env.cr.execute(
-            "select count(id) from %s where efficy_entity is not null group by efficy_entity, efficy_key having count(*) > 1;" % (self._name.replace('.', '_'))
+            "SELECT count(id) FROM %s WHERE efficy_entity IS NOT null AND active != 'f' GROUP BY efficy_entity, efficy_key HAVING count(*) > 1;" % (
+                self._name.replace('.', '_'))
         )
         if self.sudo().env.cr.fetchall():
             raise UserError("Efficy entity-key must be unique (%s)" % self)
