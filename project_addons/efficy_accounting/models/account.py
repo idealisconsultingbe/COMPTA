@@ -474,7 +474,7 @@ class AccountMove(models.Model):
                     sign = -1
                     record.action_switch_invoice_into_refund_credit_note(inverse=True)
 
-                if abs(record.amount_total - d['document']['TOTAL_WITH_VAT'] * sign) <= 0.01:
+                if abs(record.amount_total - d['document']['TOTAL_WITH_VAT'] * sign) <= 0.011:
                     log.info("Total %s matches the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_WITH_VAT']))
                 else:
                     log.error("Total %s does not match the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_WITH_VAT']))
@@ -521,5 +521,3 @@ class AccountMoveLine(models.Model):
 
     start_recognition_date = fields.Date()
     end_recognition_date = fields.Date()
-
-

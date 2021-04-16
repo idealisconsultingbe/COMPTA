@@ -48,6 +48,10 @@
                 <field name="start_recognition_date" optional="show"/>
                 <field name="end_recognition_date" optional="show"/>
             </xpath>
+            <xpath expr="//field[@name='line_ids']/tree" position="inside">
+                <field name="start_recognition_date" optional="show"/>
+                <field name="end_recognition_date" optional="show"/>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Attachments">
                     <field name="efficy_attachment_ids">
