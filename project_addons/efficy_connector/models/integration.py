@@ -10,21 +10,13 @@ _logger = logging.getLogger(__name__)
 class EfficyIntegrationMixin(models.AbstractModel):
     _name = "efficy.integration.mixin"
     _description = "Efficy Integration Mixin"
+    _sql_constraints = [('entity_key_unique', 'unique(efficy_entity, efficy_key)', "Efficy entity-key must be unique")]
 
     # active = fields.Boolean(default=True)
     efficy_mapping_model_id = fields.Many2one(comodel_name='efficy.mapping.model')
     efficy_entity = fields.Char(copy=False)
     efficy_key = fields.Char(copy=False)
     efficy_ref = fields.Char(compute='_compute_efficy_ref')
-
-    @api.constrains('efficy_entity', 'efficy_key')
-    def _verify_efficy_unique(self):
-        self.sudo().env.cr.execute(
-            "SELECT count(id) FROM %s WHERE efficy_entity IS NOT null GROUP BY efficy_entity, efficy_key HAVING count(*) > 1;" % (
-                self._name.replace('.', '_'))
-        )
-        if self.sudo().env.cr.fetchall():
-            raise UserError("Efficy entity-key must be unique (%s)" % self)
 
     def _compute_efficy_ref(self):
         for rec in self:
