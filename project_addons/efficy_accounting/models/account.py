@@ -80,6 +80,7 @@ class AccountMove(models.Model):
     def name_get(self):
         return [(rec.id, rec.payment_reference) for rec in self]
 
+    # todo: not used anymore
     def action_switch_invoice_into_refund_credit_note(self, inverse=True):
         if inverse:
             super(AccountMove, self).action_switch_invoice_into_refund_credit_note()
@@ -469,9 +470,9 @@ class AccountMove(models.Model):
                     record = record.create(move_vals)
 
                 if record.amount_total < 0 and record.move_type in ['out_invoice', 'in_invoice']:
-                    record.action_switch_invoice_into_refund_credit_note(inverse=False)
+                    record.action_switch_invoice_into_refund_credit_note(inverse=True)
 
-                if record.amount_total == d['document']['TOTAL_WITH_VAT']:
+                if abs(record.amount_total - d['document']['TOTAL_WITH_VAT']) <= 0.01:
                     log.info("Total %s matches the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_WITH_VAT']))
                 else:
                     log.error("Total %s does not match the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_WITH_VAT']))
