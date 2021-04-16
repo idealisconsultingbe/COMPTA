@@ -5,7 +5,7 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//field[@name='date']" position="attributes">
+            <xpath expr="//field[@name='date'][0]" position="attributes">
                 <attribute name="attrs"/>
             </xpath>
             <xpath expr="//div[hasclass('oe_title')]" position="replace">
