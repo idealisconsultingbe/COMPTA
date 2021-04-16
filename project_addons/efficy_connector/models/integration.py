@@ -20,7 +20,7 @@ class EfficyIntegrationMixin(models.AbstractModel):
     @api.constrains('efficy_entity', 'efficy_key')
     def _verify_efficy_unique(self):
         self.sudo().env.cr.execute(
-            "SELECT count(id) FROM %s WHERE efficy_entity IS NOT null AND active != 'f' GROUP BY efficy_entity, efficy_key HAVING count(*) > 1;" % (
+            "SELECT count(id) FROM %s WHERE efficy_entity IS NOT null GROUP BY efficy_entity, efficy_key HAVING count(*) > 1;" % (
                 self._name.replace('.', '_'))
         )
         if self.sudo().env.cr.fetchall():
