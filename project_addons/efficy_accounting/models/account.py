@@ -50,6 +50,9 @@ class EfficyInvoiceAttachment(models.Model):
             endpoint = self.env['res.company'].browse(3).efficy_database_endpoint
             headers = self.env['res.company'].browse(3).efficy_database_headers
             ans = requests.get(url=endpoint, json=payload, headers=json.loads(headers)).json()
+
+            if ans[0].get('#error'):
+                raise ValueError("Can't get the attachment from Efficy : %s" % (ans[1]))
             vals['data'] = ans[0]['@func'][0]['#result']
         return super(EfficyInvoiceAttachment, self).write(vals)
 
@@ -79,36 +82,6 @@ class AccountMove(models.Model):
 
     def name_get(self):
         return [(rec.id, rec.payment_reference) for rec in self]
-
-    # todo: not used anymore
-    def action_switch_invoice_into_refund_credit_note(self, inverse=True):
-        if inverse:
-            super(AccountMove, self).action_switch_invoice_into_refund_credit_note()
-        else:
-            if any(move.move_type not in ('in_invoice', 'out_invoice') for move in self):
-                raise ValidationError(_("This action isn't available for this document."))
-
-            for move in self:
-                reversed_move = move._reverse_move_vals({}, False)
-                new_invoice_line_ids = []
-                for cmd, virtualid, line_vals in reversed_move['line_ids']:
-                    if not line_vals['exclude_from_invoice_tab']:
-                        new_invoice_line_ids.append((0, 0,line_vals))
-                if move.amount_total < 0:
-                    # Inverse all invoice_line_ids
-                    for cmd, virtualid, line_vals in new_invoice_line_ids:
-                        line_vals.update({
-                            'quantity' : line_vals['quantity'],
-                            'amount_currency' : line_vals['amount_currency'],
-                            'debit' : line_vals['credit'],
-                            'credit' : line_vals['debit']
-                        })
-                move.write({
-                    'move_type': move.move_type.replace('invoice', 'refund'),
-                    'invoice_line_ids' : [(5, 0, 0)],
-                    'partner_bank_id': False,
-                })
-                move.write({'invoice_line_ids': new_invoice_line_ids})
 
     @api.model
     def get_moves_with_lines(self, date_from=False, noupdate=False, limit=False):
@@ -181,7 +154,7 @@ class AccountMove(models.Model):
                 self.messages.append('<li><b style="color:red">FAILED</b> %s </li>' % message)
                 self.status = 'failed'
                 record.efficy_sync_status = 'failed'
-                _logger.warning(str(e))
+                _logger.warning(message)
 
             def done(self):
                 self.status = self.status or 'success'
@@ -440,6 +413,7 @@ class AccountMove(models.Model):
                 journal_id = self.with_context(default_move_type=move_type).with_company(company_id.id)._get_default_journal()
                 partner_id = process_company(d['company'])
                 attachment_vals = process_files(d['files'])
+
                 line_vals = process_relations(d['relations'], journal_id, d['document'].get('D_INVOICE'))
 
                 # SEARCH CURRENCY
@@ -472,7 +446,7 @@ class AccountMove(models.Model):
                 sign = 1
                 if record.amount_total < 0 and record.move_type in ['out_invoice', 'in_invoice']:
                     sign = -1
-                    record.action_switch_invoice_into_refund_credit_note(inverse=True)
+                    record.action_switch_invoice_into_refund_credit_note()
 
                 if abs(record.amount_total - d['document']['TOTAL_WITH_VAT'] * sign) <= 0.011:
                     log.info("Total %s matches the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_WITH_VAT']))
@@ -496,7 +470,7 @@ class AccountMove(models.Model):
                     })
 
                 failed_records |= record
-                log.failed(str(e))
+                log.failed(e)
 
             finally:
                 log_vals_batch.append(log.get_create_vals())
