@@ -395,6 +395,8 @@ class AccountMove(models.Model):
                 _logger.warning("Processing limit reached, stopping")
                 break
 
+            _logger.info("Processing key %s" % key)
+
             d = data[key]
             raw = json.dumps(d.pop('raw'))
             log.reset(date=sync_date, sequence=sync_sequence, entity='Docu', key=key, data=json.dumps(d, indent=2), raw=raw)
@@ -461,6 +463,7 @@ class AccountMove(models.Model):
 
             except Exception as e:
 
+                record = record | self.env['account.move'].search([('efficy_entity', '=', 'Docu'), ('efficy_key', '=', key)])
                 if not record:
                     record = record.create({
                         'efficy_entity': 'Docu',
