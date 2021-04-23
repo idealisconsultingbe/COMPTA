@@ -94,7 +94,7 @@ class AccountMove(models.Model):
             keys = []
 
             fields_document = ['K_DOCUMENT', 'R_F_INVOICE_STATUS', 'REFERENCE', 'COMMUNICATION', 'D_INVOICE', 'EXP_DATE', 'R_CURRCY', 'TOTAL_WITH_VAT', 'TOTAL_NO_VAT']
-            fields_company = ['K_COMPANY', 'NAME_1', 'F_IBAN', 'STREET', 'COUNTRYSHORT', 'POSTCODE', 'CITY', 'EMAIL1']
+            fields_company = ['K_COMPANY', 'NAME_1', 'F_IBAN', 'STREET', 'COUNTRYSHORT', 'POSTCODE', 'CITY', 'EMAIL1', 'VAT']
             fields_relation = ['K_RELATION', 'COMMENT', 'QUANTITY', 'DISCOUNT', 'PRICE', 'F_MULTIPLIER', 'F_D_S_RECO', 'F_D_E_RECO', 'F_ACCOUNTING_TYPE', 'VAT_1']
             fields_file = ['K_FILE', 'VERSION']
 
