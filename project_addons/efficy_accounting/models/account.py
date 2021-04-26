@@ -1,65 +1,65 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from time import time
+from odoo.addons.efficy_accounting.models.tools import Log
 import logging
-import requests
 import json
-import math
 
 _logger = logging.getLogger(__name__)
 
 
-class EfficyInvoiceAttachment(models.Model):
-    _name = 'efficy.invoice.attachment'
-    _inherit = ['efficy.integration.mixin']
-    _description = "Efficy Attachment"
-
-    endpoint = fields.Char(related='move_id.company_id.efficy_database_endpoint')
-    headers = fields.Char(related='move_id.company_id.efficy_database_headers')
-    data_filename = fields.Char()
-    version = fields.Integer()
-    data = fields.Binary()
-    move_id = fields.Many2one(comodel_name='account.move')
-
-    def write(self, vals):
-        for rec in self:
-            if rec.data and not ('efficy_key' in vals or 'version' in vals):
-                continue
-            if rec.data and vals.get('efficy_key') == rec.efficy_key and vals.get('version') == rec.version:
-                continue
-            if not rec.move_id:
-                continue
-            key = rec.efficy_key or vals.get('efficy_key')
-            version = rec.version or vals.get('version')
-            payload = [
-                {
-                    '@name': 'edit',
-                    'entity': rec.move_id.efficy_entity,
-                    'key': rec.move_id.efficy_key,
-                    'closecontext': True,
-                    '@func': [
-                        {
-                            '@name': 'attachment',
-                            'key': "%s_%s" % (key, version or 0),
-                        }
-                    ]
-                }
-            ]
-            _logger.info("requested attachment %s_%s for %s-%s" % (key, version, rec.move_id.efficy_entity, rec.move_id.efficy_key))
-            _logger.debug("request payload : %s" % payload)
-            endpoint = self.env['res.company'].browse(3).efficy_database_endpoint
-            headers = self.env['res.company'].browse(3).efficy_database_headers
-            ans = requests.get(url=endpoint, json=payload, headers=json.loads(headers)).json()
-
-            if ans[0].get('#error'):
-                raise ValueError("Can't get the attachment from Efficy : %s" % (ans[1]))
-            vals['data'] = ans[0]['@func'][0]['#result']
-        return super(EfficyInvoiceAttachment, self).write(vals)
-
-    def create(self, vals):
-        records = super(EfficyInvoiceAttachment, self).create(vals)
-        records.write({})
-        return records
+# class Query():
+#
+#     def __init__(self, key):
+#         # todo: format docstrings
+#         # params: list of dictionary params
+#         self.key = key
+#         self.payload = [{
+#             '@name': 'api',
+#             '@func': []
+#         }]
+#
+#     def add_params(self, params_list):
+#         self.payload[0]['@func'].append(
+#             {'@name': 'query', 'key': self.key} | {p: params[p] for p in params} for params in params_list
+#         )
+#
+#     def request(self):
+#         self.dataset_raw = self.env['efficy.mapping.model'].json_request(self.payload)
+#
+#     def ans_format(self, mapping_dict):
+#         # todo: format docstrings
+#         """
+#         {'entity': {
+#             'fields': {'efficy_field': 'query_field'},
+#             'relations' : {'entity': [query_fields]}
+#         }}
+#
+#         'query_field': [
+#             (entity, key_field, 'fields', 'efficy_field'),
+#             (entity,
+#
+#         {'entity' : {
+#             'key': {
+#                 'fields': {'efficy_field': 'value', ...},
+#                 'relations': {'entity': [keys]}
+#             },
+#             ...
+#         }}
+#         """
+#         dic = {}
+#         keys = []
+#
+#         for func in self.dataset_raw[0]['@func']:
+#             for data in func['#result']['#data']:
+#                 for d in data:
+#                     mapping = mapping_dict[d]
+#                     entity = mapping[0]
+#                     key = data[mapping[1]]
+#                     dic[entity][key]
+#
+#         return dic
+#
 
 
 class AccountMove(models.Model):
@@ -70,18 +70,35 @@ class AccountMove(models.Model):
     efficy_attachment_ids = fields.One2many(comodel_name='efficy.invoice.attachment', inverse_name='move_id')
     amount_residual = fields.Monetary(store=True)
     efficy_reference = fields.Char()
-    efficy_sync_log_ids = fields.One2many(comodel_name='efficy.sync.log', compute="_compute_efficy_sync_log_ids")
-    efficy_sync_status = fields.Selection([('processing', "Processing"), ('skipped', "Skipped"), ('failed', "Failed"), ('warning', "Warning"), ('success', "Success"), ('error', 'Error')])
-
-    def _compute_efficy_sync_log_ids(self):
-        for rec in self:
-            rec.efficy_sync_log_ids = self.env['efficy.sync.log'].search([
-                ('efficy_entity', '=', rec.efficy_entity),
-                ('efficy_key', '=', rec.efficy_key)
-            ])
 
     def name_get(self):
         return [(rec.id, rec.payment_reference) for rec in self]
+
+    def _preprocess_data(self, d, log):
+
+        self.ensure_one()
+
+        if self and self.state not in ['draft']:
+            log.skipped("Entry posted, skipping")
+
+    def _process_data(self, d, log):
+        pass
+
+    def _postprocess_data(self, d, log):
+
+        self.ensure_one()
+
+        sign = 1
+        if self.amount_total < 0 and self.move_type in ['out_invoice', 'in_invoice']:
+            sign = -1
+            self.action_switch_invoice_into_refund_credit_note()
+
+        if abs(self.amount_total - d['document']['TOTAL_WITH_VAT'] * sign) <= 0.011:
+            log.info("Total %s matches the total_with_vat from Efficy : %s" % (
+                self.amount_total, d['document']['TOTAL_WITH_VAT']))
+        else:
+            log.error("Total %s does not match the total_with_vat from Efficy : %s" % (
+                self.amount_total, d['document']['TOTAL_WITH_VAT']))
 
     @api.model
     def get_moves_with_lines(self, date_from=False, noupdate=False, limit=False):
@@ -96,7 +113,7 @@ class AccountMove(models.Model):
             fields_document = ['K_DOCUMENT', 'R_F_INVOICE_STATUS', 'REFERENCE', 'COMMUNICATION', 'D_INVOICE', 'EXP_DATE', 'R_CURRCY', 'TOTAL_WITH_VAT', 'TOTAL_NO_VAT']
             fields_company = ['K_COMPANY', 'NAME_1', 'F_IBAN', 'STREET', 'COUNTRYSHORT', 'POSTCODE', 'CITY', 'EMAIL1', 'VAT']
             fields_relation = ['K_RELATION', 'COMMENT', 'QUANTITY', 'DISCOUNT', 'PRICE', 'F_MULTIPLIER', 'F_D_S_RECO', 'F_D_E_RECO', 'F_ACCOUNTING_TYPE', 'VAT_1']
-            fields_file = ['K_FILE', 'VERSION']
+            fields_file = ['K_FILE', 'VERSION', 'K_DOCUMENT']
 
             for func in ans[0]['@func']:
                 for d in func['#result']['#data']:
@@ -116,64 +133,6 @@ class AccountMove(models.Model):
                     keys.append(key)
 
             return dic
-
-        class Log():
-
-            def reset(self, date, sequence, entity, key, data, raw):
-                self.messages = []
-                self.status = False
-                self.date = date
-                self.sequence = sequence
-                self.entity = entity
-                self.key = key
-                self.data = data
-                self.raw = raw
-
-            def skipped(self, message):
-                self.messages.append('<li><b style="color:gray">SKIPPED</b> %s </li>' % message)
-                self.status = 'skipped'
-                if record:
-                    record.efficy_sync_status = 'skipped'
-                raise SkippedException()
-
-            def info(self, message):
-                self.messages.append('<li><b style="color:green">INFO</b> %s </li>' % message)
-
-            def warning(self, message):
-                self.messages.append('<li><b style="color:orange">WARNING</b> %s </li>' % message)
-                self.status = 'warning'
-
-            def error(self, message):
-                self.messages.append('<li><b style="color:red">ERROR</b> %s </li>' % message)
-                self.status = 'error'
-                if record:
-                    record.efficy_sync_status = 'error'
-                _logger.warning(message)
-
-            def failed(self, message):
-                self.messages.append('<li><b style="color:red">FAILED</b> %s </li>' % message)
-                self.status = 'failed'
-                record.efficy_sync_status = 'failed'
-                _logger.warning(message)
-
-            def done(self):
-                self.status = self.status or 'success'
-                record.efficy_sync_status = self.status
-
-            def get_message(self):
-                return "<ul>%s</ul>" % ''.join(self.messages)
-
-            def get_create_vals(self):
-                return {
-                    'sync_message': self.get_message(),
-                    'sync_date': self.date,
-                    'sync_sequence': self.sequence,
-                    'efficy_entity': self.entity,
-                    'efficy_key': self.key,
-                    'sync_data': self.data,
-                    'sync_status': self.status,
-                    'sync_raw_data': self.raw,
-                }
 
         def parse_reference(ref):
 
@@ -202,66 +161,6 @@ class AccountMove(models.Model):
                 move_type = 'in_invoice'
 
             return move_type, company_id
-
-        def process_company(d):
-
-            # SEARCH BANK
-            bank_id = self.env['res.partner.bank'].search([('acc_number', '=', d['F_IBAN'])])
-
-            # CHECK VAT
-            vat = False
-            if d.get('VAT'):
-                vat_number = d['VAT'].replace(' ', '')
-                if self.env['res.partner'].simple_vat_check(d['COUNTRYSHORT'], vat_number):
-                    vat = "%s%s" % (d['COUNTRYSHORT'], vat_number)
-                else:
-                    record.efficy_sync_status = 'warning'
-                    log.warning("Bad vat format: %s%s" % (d['COUNTRYSHORT'], vat_number))
-
-            partner_id = self.env['res.partner'].search([('efficy_key', '=', d['K_COMPANY'])])
-
-            partner_vals = {
-                'efficy_key': d['K_COMPANY'],
-                'efficy_entity': 'Comp',
-                'name': d['NAME_1'],
-                'bank_ids': bank_id if bank_id else [(0, 0, {'acc_number': d['F_IBAN']})],
-                'street': d['STREET'],
-                'country_id': countries[d['COUNTRYSHORT']].id if d['COUNTRYSHORT'] else False,
-                'zip': d['POSTCODE'],
-                'city': d['CITY'],
-                'vat': vat,
-                'email': d['EMAIL1'],
-                'company_type': 'company',
-                'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_companies').id,
-            }
-
-            # PARTNER WRITE OR CREATE
-            if partner_id:
-                partner_id.write(partner_vals)
-            else:
-                partner_id = partner_id.create(partner_vals)
-
-            return partner_id
-
-        def process_files(data):
-
-            update_vals = []
-
-            for d in data.values():
-                record = self.env['efficy.invoice.attachment'].search([
-                    ('efficy_key', '=', d['K_FILE']),
-                    ('efficy_entity', '=', 'File')
-                ])
-                update_vals.append((
-                    record and 1 or 0,
-                    record.id or 0,
-                    {
-                        'efficy_key': d['K_FILE'],
-                        'efficy_entity': 'File',
-                        'version': d['VERSION']
-                    }
-                ))
-            return update_vals
 
         def process_relations(data, journal_id, invoice_date=False):
 
@@ -378,7 +277,7 @@ class AccountMove(models.Model):
 
         companies = {company_id.efficy_code: company_id for company_id in self.env['res.company'].search([])}
         currencies = {currency_id.name: currency_id for currency_id in self.env['res.currency'].search([])}
-        countries = {country_id.code: country_id for country_id in self.env['res.country'].search([])}
+        # countries = {country_id.code: country_id for country_id in self.env['res.country'].search([])}
 
         i = 0
         start_loop = time()
@@ -399,7 +298,8 @@ class AccountMove(models.Model):
 
             d = data[key]
             raw = json.dumps(d.pop('raw'))
-            log.reset(date=sync_date, sequence=sync_sequence, entity='Docu', key=key, data=json.dumps(d, indent=2), raw=raw)
+
+            log.reset(date=sync_date, sequence=sync_sequence, entity='Docu', key=key, data=json.dumps(d, indent=2))
 
             record = self.search([('efficy_entity', '=', 'Docu'), ('efficy_key', '=', key)])
 
@@ -408,14 +308,12 @@ class AccountMove(models.Model):
                 if record and noupdate:
                     log.skipped("Existing, no update")
 
-                if record and record.state not in ['draft']:
-                    log.skipped("Entry posted, skipping")
+                record._preprocess_data(d, log)
 
                 move_type, company_id = parse_reference(d['document']['REFERENCE'])
                 journal_id = self.with_context(default_move_type=move_type).with_company(company_id.id)._get_default_journal()
-                partner_id = process_company(d['company'])
-                attachment_vals = process_files(d['files'])
-
+                partner_id = self.with_context(sync_date=sync_date, sync_sequence=sync_sequence).env['res.partner'].process_data([d['company']], 'K_COMPANY', 'Comp')
+                attachment_ids = self.with_context(sync_date=sync_date, sync_sequence=sync_sequence).env['efficy.invoice.attachment'].process_data(d['files'].values(), 'K_FILE', 'File')
                 line_vals = process_relations(d['relations'], journal_id, d['document'].get('D_INVOICE'))
 
                 # SEARCH CURRENCY
@@ -437,7 +335,7 @@ class AccountMove(models.Model):
                     'currency_id': currency_id,
                     'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_customer_invoices').id,
                     'invoice_line_ids': line_vals,
-                    'efficy_attachment_ids': attachment_vals,
+                    'efficy_attachment_ids': attachment_ids,
                 }
 
                 if record:
@@ -445,15 +343,7 @@ class AccountMove(models.Model):
                 else:
                     record = record.create(move_vals)
 
-                sign = 1
-                if record.amount_total < 0 and record.move_type in ['out_invoice', 'in_invoice']:
-                    sign = -1
-                    record.action_switch_invoice_into_refund_credit_note()
-
-                if abs(record.amount_total - d['document']['TOTAL_WITH_VAT'] * sign) <= 0.011:
-                    log.info("Total %s matches the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_WITH_VAT']))
-                else:
-                    log.error("Total %s does not match the total_with_vat from Efficy : %s" % (record.amount_total, d['document']['TOTAL_WITH_VAT']))
+                record._postprocess_data(d, log)
 
                 processed_records |= record
                 log.done()
@@ -462,19 +352,7 @@ class AccountMove(models.Model):
                 skipped_records |= record
 
             except Exception as e:
-
-                record = record | self.env['account.move'].search([('efficy_entity', '=', 'Docu'), ('efficy_key', '=', key)])
-                if not record:
-                    record = record.create({
-                        'efficy_entity': 'Docu',
-                        'efficy_key': key,
-                        'efficy_reference': d.get('document', {}).get('REFERENCE', False),
-                        'efficy_sync_status': 'failed',
-                    })
-
-                failed_records |= record
                 log.failed(e)
-
             finally:
                 log_vals_batch.append(log.get_create_vals())
 

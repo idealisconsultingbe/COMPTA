@@ -18,6 +18,12 @@
         <field name="arch" type="xml">
             <xpath expr="//div[hasclass('oe_title')]" position="inside">
                 <field name="efficy_ref"/>
+                <field name="efficy_sync_status" widget="badge"
+                       decoration-success="efficy_sync_status == 'success'"
+                       decoration-warning="efficy_sync_status == 'warning'"
+                       decoration-muted="efficy_sync_status == 'skipped'"
+                       decoration-danger="efficy_sync_status == 'failed'"
+                />
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Efficy connector">
@@ -26,6 +32,11 @@
                         <field name="efficy_entity"/>
                         <field name="efficy_key"/>
                     </group>
+                </page>
+            </xpath>
+            <xpath expr="//notebook" position="inside">
+                <page string="Efficy Sync Logs">
+                    <field name="efficy_sync_log_ids"/>
                 </page>
             </xpath>
         </field>

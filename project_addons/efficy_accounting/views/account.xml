@@ -38,12 +38,6 @@
                 <field name="name" string="Odoo Reference"/>
                 <field name="approbation_status"/>
             </xpath>
-<!--            <xpath expr="//group[@id='header_left_group']" position="after">-->
-<!--                <group>-->
-<!--                    <field name="efficy_attachment_filename"/>-->
-<!--                    <field name="efficy_attachment"/>-->
-<!--                </group>-->
-<!--            </xpath>-->
             <xpath expr="//field[@name='invoice_line_ids']/tree" position="inside">
                 <field name="start_recognition_date" optional="show"/>
                 <field name="end_recognition_date" optional="show"/>
@@ -78,13 +72,13 @@
             <xpath expr="//tree" position="inside">
                 <field name="efficy_ref"/>
                 <field name="approbation_status"/>
-                <field name="efficy_sync_status" widget="badge"
-                       decoration-success="efficy_sync_status == 'success'"
-                       decoration-warning="efficy_sync_status == 'warning'"
-                       decoration-muted="efficy_sync_status == 'skipped'"
-                       decoration-danger="efficy_sync_status == 'failed'"
-                       optional="hide"
-                />
+<!--                <field name="efficy_sync_status" widget="badge"-->
+<!--                       decoration-success="efficy_sync_status == 'success'"-->
+<!--                       decoration-warning="efficy_sync_status == 'warning'"-->
+<!--                       decoration-muted="efficy_sync_status == 'skipped'"-->
+<!--                       decoration-danger="efficy_sync_status == 'failed'"-->
+<!--                       optional="hide"-->
+<!--                />-->
             </xpath>
             <xpath expr="//field[@name='name']" position="attributes">
                 <attribute name="optional">show</attribute>
