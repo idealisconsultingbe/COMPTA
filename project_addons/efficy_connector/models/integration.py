@@ -56,6 +56,9 @@ class EfficyIntegrationMixin(models.AbstractModel):
     def _postprocess_data(self, d, log):
         pass
 
+    def _create_empty(self, d):
+        pass
+
     @api.model
     def process_data(self, datas, key_field, entity, noupdate=False, limit=False):
         """
@@ -76,7 +79,7 @@ class EfficyIntegrationMixin(models.AbstractModel):
         for d in datas:
 
             if i % 100 == 0:
-                _logger.info("processed %s records out of %s. Took %s sec" % (i, len(data), time() - start))
+                _logger.info("processed %s records out of %s. Took %s sec" % (i, len(datas), time() - start))
                 start = time()
             i += 1
 
@@ -84,18 +87,14 @@ class EfficyIntegrationMixin(models.AbstractModel):
                 _logger.warning("Processing limit reached, stopping")
                 break
 
-            key = d[key_field]
-            entity = entity
-
-            _logger.info("Processing key %s" % key)
+            _logger.info("Processing key %s" % d[key_field])
 
             log.reset(date=self._context.get('sync_date'), sequence=self._context.get('sync_sequence'),
-                      entity=entity, key=key, data=json.dumps(d, indent=2))
+                      entity=entity, key=d[key_field], data=json.dumps(d, indent=2))
 
-            # SEARCH BANK
             record = self.env[self._name].search([
                 ('efficy_entity', '=', entity),
-                ('efficy_key', '=', key)
+                ('efficy_key', '=', d[key_field])
             ])
 
             try:
@@ -107,7 +106,6 @@ class EfficyIntegrationMixin(models.AbstractModel):
 
                 record_vals = self._process_data(d, log)
 
-                # PARTNER WRITE OR CREATE
                 if record:
                     record.write(record_vals)
                 else:
@@ -119,10 +117,9 @@ class EfficyIntegrationMixin(models.AbstractModel):
 
                 log.done()
 
-            except SkippedException as e:
-                log.skipped(e)
             except Exception as e:
-                log.failed(e)
+                record._create_empty(d)
+                log.failed(e, raise_exc=False)
             finally:
                 log_vals_batch.append(log.get_create_vals())
 

@@ -46,10 +46,17 @@ class EfficyInvoiceAttachment(models.Model):
 
     @api.model
     def _process_data(self, d, log):
+
+        move_id = self.env['account.move'].search([('efficy_entity', '=', 'Docu'), ('efficy_key', '=', d['K_DOCUMENT'])])
+
+        if not move_id:
+            log.failed("The invoice is missing; can't create attachment")
+
         record_vals = {
             'efficy_key': d['K_FILE'],
             'efficy_entity': 'File',
             'version': d['VERSION'],
+            'move_id': move_id.id,
             'data': self.get_attachment_data('Docu', d['K_DOCUMENT'], d['K_FILE'], d['VERSION'])
         }
 

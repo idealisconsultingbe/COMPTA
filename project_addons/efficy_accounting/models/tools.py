@@ -5,6 +5,8 @@ _logger = logging.getLogger(__name__)
 
 class SkippedException(Exception):
     pass
+class FailedException(Exception):
+    pass
 
 class Log():
 
@@ -35,12 +37,14 @@ class Log():
         self.status = 'error'
         _logger.warning(message)
 
-    def failed(self, message):
+    def failed(self, message, raise_exc=True):
         self.messages.append('<li><b style="color:red">FAILED</b> %s </li>' % message)
         self.status = 'failed'
         _logger.warning(message)
-        self.traceback = traceback.print_exc()
-        print(self.traceback)
+        #self.traceback = traceback.print_exc()
+        # print(self.traceback)
+        if raise_exc:
+            raise FailedException()
 
     def done(self):
         self.status = self.status or 'success'
