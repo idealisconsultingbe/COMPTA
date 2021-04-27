@@ -277,7 +277,7 @@ class AccountMove(models.Model):
         self.get_moves_with_lines()
 
     @api.model
-    def get_moves_with_lines(self, date_from=False, noupdate=False, limit=False):
+    def get_moves_with_lines(self, date_from=False, date_to=False, noupdate=False, limit=False):
 
         class SkippedException(Exception):
             pass
@@ -549,10 +549,20 @@ class AccountMove(models.Model):
                 '@name': 'api',
                 '@func': [{'@name': 'query', 'key': 12004, 'param1': rec.efficy_key} for rec in self if rec.efficy_key]
             }]
+        elif date_from and date_to:
+            payload = [{
+                '@name': 'api',
+                '@func': [{'@name': 'query', 'key': 11969, 'param1': date_from.strftime("%d/%m/%Y"), 'param2': date_to.strftime("%d/%m/%Y")}]
+            }]
         elif date_from:
             payload = [{
                 '@name': 'api',
                 '@func': [{'@name': 'query', 'key': 11969, 'param1': date_from.strftime("%d/%m/%Y")}]
+            }]
+        elif date_to:
+            payload = [{
+                '@name': 'api',
+                '@func': [{'@name': 'query', 'key': 11969, 'param2': date_to.strftime("%d/%m/%Y")}]
             }]
         else:
             payload = [{
