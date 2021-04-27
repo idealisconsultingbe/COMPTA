@@ -150,7 +150,7 @@ class AccountMove(models.Model):
         if not currency_id:
             log.failed("No currency found for %s" % d['R_CURRCY'] or 'None')
 
-        # line_vals = self.env['account.move.line']._process_data(self._context.get('line_data'), log)
+        line_vals = [(5, 0, 0)] + [(0, 0, self.env['account.move.line']._process_data(data, log)) for data in self._context.get('line_data') if data['K_DOCUMENT'] == d['K_DOCUMENT']]
 
         partner_id = self.env['res.partner'].search([('efficy_entity', '=', 'Comp'), ('efficy_key', '=', d.get('K_COMPANY'))]) or\
                      self.env['res.partner'].create({'efficy_entity': 'Comp', 'efficy_key': d.get('K_COMPANY')})
@@ -167,7 +167,7 @@ class AccountMove(models.Model):
             'journal_id': self.with_context(default_move_type=move_type).with_company(company_id.id)._get_default_journal().id,
             'invoice_date_due': d.get('EXP_DATE') or d.get('D_INVOICE'),
             'currency_id': currency_id.id,
-            # 'invoice_line_ids': line_vals,
+            'invoice_line_ids': line_vals,
             'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_customer_invoices').id,
         }
 
@@ -267,8 +267,8 @@ class AccountMove(models.Model):
 
         if file:
             self.env['efficy.invoice.attachment'].process_data(dic_file, 'K_FILE', 'File')
-        if relation:
-            self.env['account.move.line'].process_data(dic_relation, 'K_RELATION', 'Rela')
+        # if relation:
+        #     self.env['account.move.line'].process_data(dic_relation, 'K_RELATION', 'Rela')
 
         if not self:
             self.env.company.efficy_last_sync_date = sync_date
@@ -538,7 +538,7 @@ class AccountMove(models.Model):
                     'discount': d.get('DISCOUNT', 0),
                     'price_unit': round(d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100, 2),
                     'tax_ids': tax_ids,
-                    'efficy_entity': 'Rela',
+                    # 'efficy_entity': 'Rela',
                     'efficy_key': d['K_RELATION']
                 }))
 
@@ -616,7 +616,7 @@ class AccountMove(models.Model):
                 # SEARCH CURRENCY
                 currency_id = currencies.get(d['document']['R_CURRCY'], False)
                 if not currency_id:
-                    log.error("No currency found for %s" % d['document']['R_CURRCY'] or 'None')
+                    log.failed("No currency found for %s" % d['document']['R_CURRCY'] or 'None')
 
                 move_vals = {
                     'efficy_key': d['document']['K_DOCUMENT'],
@@ -703,9 +703,12 @@ class AccountMoveLine(models.Model):
         if not move_id:
             return
 
+        account_id = move_id.journal_id.default_account_id
+
         self.create({
             'name': d.get('COMMENT', 'False'),
             'move_id': move_id.id,
+            'account_id': account_id.id
         })
 
     def _process_data(self, d, log):
@@ -793,5 +796,5 @@ class AccountMoveLine(models.Model):
             'discount': d.get('DISCOUNT', 0),
             'price_unit': round(d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100, 2),
             'tax_ids': tax_ids,
-            'move_id': move_id.id,
+            # 'move_id': move_id.id,
         }

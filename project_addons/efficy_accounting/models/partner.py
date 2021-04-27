@@ -77,7 +77,7 @@ class ResPartner(models.Model):
         record_vals = {
             'efficy_key': d['K_COMPANY'],
             'efficy_entity': 'Comp',
-            'name': d['NAME'],
+            'name': d.get('NAME') or d.get('NAME_1'),
             'bank_ids': bank_id if bank_id else [(0, 0, {'acc_number': d['F_IBAN']})],
             'street': d['STREET'],
             'country_id': country_id.id,
