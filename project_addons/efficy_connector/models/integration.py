@@ -28,7 +28,7 @@ class EfficyIntegrationMixin(models.AbstractModel):
         ('warning', "Warning"),
         ('success', "Success"),
         ('error', 'Error')
-    ], compute='_compute_efficy_sync_status')
+    ], compute='_compute_efficy_sync_status', store=True)
 
     @api.depends('efficy_sync_log_ids')
     def _compute_efficy_sync_status(self):

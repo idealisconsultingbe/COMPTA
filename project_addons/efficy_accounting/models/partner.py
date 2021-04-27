@@ -44,6 +44,8 @@ class ResPartner(models.Model):
 
             return dic_company
 
+        self = self.filtered(lambda x: x.efficy_entity == 'Comp' and x.efficy_key)
+
         payload = [{
             '@name': 'api',
             '@func': [{'@name': 'query', 'key': 12241, 'param1': rec.efficy_key} for rec in self]
