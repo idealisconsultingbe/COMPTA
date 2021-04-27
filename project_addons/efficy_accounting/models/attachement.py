@@ -62,3 +62,14 @@ class EfficyInvoiceAttachment(models.Model):
 
         return record_vals
 
+
+    def _create_empty(self, d):
+
+        if self:
+            return
+
+        self.create({
+            'efficy_entity': 'File',
+            'efficy_key': d.get('K_FILE'),
+        })
+

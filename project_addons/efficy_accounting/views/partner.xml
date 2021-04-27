@@ -16,6 +16,11 @@
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <header>
+                    <button name="button_run_query" type="object" string="Run Query"/>
+                </header>
+            </xpath>
             <xpath expr="//div[hasclass('oe_title')]" position="inside">
                 <field name="efficy_ref"/>
                 <field name="efficy_sync_status" widget="badge"

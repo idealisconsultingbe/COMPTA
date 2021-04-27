@@ -71,6 +71,39 @@ class AccountMove(models.Model):
     amount_residual = fields.Monetary(store=True)
     efficy_reference = fields.Char()
 
+    def sync_entity_one(self):
+
+        def ans_format(ans):
+
+            fields_document = ['K_DOCUMENT', 'R_F_INVOICE_STATUS', 'REFERENCE', 'COMMUNICATION', 'D_INVOICE', 'EXP_DATE', 'R_CURRCY', 'TOTAL_WITH_VAT', 'TOTAL_NO_VAT']
+
+            dic = {}
+            for func in ans[0]['@func']:
+                for d in func['#result']['#data']:
+                    dic |= {f: d.get(f) for f in fields_document if f in d}
+
+            return [dic]
+
+
+        self.ensure_one()
+
+        payload = [{
+            "@name": "consult",
+            "entity": "Docu",
+            "key": self.efficy_key,
+            "@func": [
+                {"@name": "master"},
+                {"@name": "category", "category": "DOCU$INVOICING"},
+            ]
+        }]
+
+        ans = self.env['efficy.mapping.model'].json_request(payload)
+        sync_date = fields.Datetime.now()
+        sync_sequence = self.env.ref('efficy_accounting.seq_efficy_sync_log').next_by_id()
+        self = self.with_context(sync_date=sync_date, sync_sequence=sync_sequence)
+        dic_document = ans_format(ans)
+        self.process_data(dic_document, 'K_DOCUMENT', 'Docu')
+
     def name_get(self):
         return [(rec.id, rec.payment_reference) for rec in self]
 
@@ -117,18 +150,24 @@ class AccountMove(models.Model):
         if not currency_id:
             log.failed("No currency found for %s" % d['R_CURRCY'] or 'None')
 
+        # line_vals = self.env['account.move.line']._process_data(self._context.get('line_data'), log)
+
+        partner_id = self.env['res.partner'].search([('efficy_entity', '=', 'Comp'), ('efficy_key', '=', d.get('K_COMPANY'))]) or\
+                     self.env['res.partner'].create({'efficy_entity': 'Comp', 'efficy_key': d.get('K_COMPANY')})
+
         return {
             'efficy_key': d['K_DOCUMENT'],
             'efficy_entity': 'Docu',
             'approbation_status': d['R_F_INVOICE_STATUS'],
             'payment_reference': d['REFERENCE'] if move_type in ['out_invoice', 'out_refund'] else d['COMMUNICATION'],
             'efficy_reference': d['REFERENCE'],
-            'partner_id': self.env['res.partner'].search([('efficy_entity', '=', 'Comp'), ('efficy_key', '=', d['K_COMPANY'])]).id,
+            'partner_id': partner_id.id,
             'invoice_date': d['D_INVOICE'],
             'move_type': move_type,
             'journal_id': self.with_context(default_move_type=move_type).with_company(company_id.id)._get_default_journal().id,
             'invoice_date_due': d.get('EXP_DATE') or d.get('D_INVOICE'),
             'currency_id': currency_id.id,
+            # 'invoice_line_ids': line_vals,
             'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_customer_invoices').id,
         }
 
@@ -148,9 +187,20 @@ class AccountMove(models.Model):
             log.error("Total %s does not match the total_with_vat from Efficy : %s" % (
                 self.amount_total, d['TOTAL_WITH_VAT']))
 
+    def _create_empty(self, d):
+
+        if self:
+            return
+
+        self.create({
+            'efficy_reference': d.get('REFERENCE', 'False'),
+            'efficy_entity': 'Rela',
+            'efficy_key': d.get('K_RELATION'),
+        })
+
     def run_query(self, date_from=False, noupdate=False, limit=False, company=True, document=True, relation=True, file=True):
 
-        def ans_format2(ans):
+        def ans_format(ans):
             dic_document = []
             dic_company = []
             dic_relation = []
@@ -186,34 +236,6 @@ class AccountMove(models.Model):
 
             return dic_document, dic_company, dic_relation, dic_file
 
-        def ans_format(ans):
-            dic = {}
-            keys = []
-
-            fields_document = ['K_DOCUMENT', 'R_F_INVOICE_STATUS', 'REFERENCE', 'COMMUNICATION', 'D_INVOICE', 'EXP_DATE', 'R_CURRCY', 'TOTAL_WITH_VAT', 'TOTAL_NO_VAT', 'K_COMPANY']
-            fields_company = ['K_COMPANY', 'NAME_1', 'F_IBAN', 'STREET', 'COUNTRYSHORT', 'POSTCODE', 'CITY', 'EMAIL1', 'VAT']
-            fields_relation = ['K_RELATION', 'COMMENT', 'QUANTITY', 'DISCOUNT', 'PRICE', 'F_MULTIPLIER', 'F_D_S_RECO', 'F_D_E_RECO', 'F_ACCOUNTING_TYPE', 'VAT_1', 'K_DOCUMENT']
-            fields_file = ['K_FILE', 'VERSION', 'K_DOCUMENT']
-
-            for func in ans[0]['@func']:
-                for d in func['#result']['#data']:
-                    key = d['K_DOCUMENT']
-                    dic.setdefault(key, {
-                        'document': {f: d.get(f) for f in fields_document},
-                        'company': {f: d.get(f) for f in fields_company},
-                        'relations': {},
-                        'files': {},
-                        'raw': [],
-                    })
-                    # dic[key]['relations'].append({f: d.get(f) for f in fields_relation})
-                    dic[key]['relations'][d['K_RELATION']] = {f: d.get(f) for f in fields_relation}
-                    # dic[key]['files'].append({f: d.get(f) for f in fields_file})
-                    dic[key]['files'][d['K_FILE']] = {f: d.get(f) for f in fields_file}
-                    dic[key]['raw'].append(d)
-                    keys.append(key)
-
-            return dic
-
         if self:
             payload = [{
                 '@name': 'api',
@@ -232,7 +254,7 @@ class AccountMove(models.Model):
 
         ans = self.env['efficy.mapping.model'].json_request(payload)
         # datas = ans_format(ans)
-        dic_document, dic_company, dic_relation, dic_file = ans_format2(ans)
+        dic_document, dic_company, dic_relation, dic_file = ans_format(ans)
 
         sync_date = fields.Datetime.now()
         sync_sequence = self.env.ref('efficy_accounting.seq_efficy_sync_log').next_by_id()
@@ -241,23 +263,18 @@ class AccountMove(models.Model):
         if company:
             self.env['res.partner'].process_data(dic_company, 'K_COMPANY', 'Comp')
         if document:
-            self.env['account.move'].process_data(dic_document, 'K_DOCUMENT', 'Docu')
+            self.with_context(line_data=dic_relation).env['account.move'].process_data(dic_document, 'K_DOCUMENT', 'Docu')
 
         if file:
             self.env['efficy.invoice.attachment'].process_data(dic_file, 'K_FILE', 'File')
         if relation:
             self.env['account.move.line'].process_data(dic_relation, 'K_RELATION', 'Rela')
 
-        # for data in datas.values():
-        #
-        #     self.env['res.partner'].process_data([data['company']], 'K_COMPANY', 'Comp')
-        #     self.env['account.move'].process_data([data['document']], 'K_DOCUMENT', 'Docu')
-        #
-        #     self.env['efficy.invoice.attachment'].process_data(data['files'].values(), 'K_FILE', 'File')
-        #     self.env['account.move.line'].process_data(data['relations'].values(), 'K_RELATION', 'Rela')
-
         if not self:
             self.env.company.efficy_last_sync_date = sync_date
+
+    def button_get_moves_with_lines(self):
+        self.get_moves_with_lines()
 
     @api.model
     def get_moves_with_lines(self, date_from=False, noupdate=False, limit=False):
@@ -674,6 +691,20 @@ class AccountMoveLine(models.Model):
 
     start_recognition_date = fields.Date()
     end_recognition_date = fields.Date()
+
+    def _create_empty(self, d):
+
+        if self:
+            return
+
+        move_id = self.env['account.move'].search([('efficy_entity', '=', 'Docu'), ('efficy_key', '=', d['K_DOCUMENT'])])
+        if not move_id:
+            return
+
+        self.create({
+            'name': d.get('COMMENT', 'False'),
+            'move_id': move_id.id,
+        })
 
     def _process_data(self, d, log):
 

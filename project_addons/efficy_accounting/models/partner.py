@@ -6,6 +6,59 @@ class ResPartner(models.Model):
     _inherit = ['res.partner', 'efficy.integration.mixin']
 
     @api.model
+    def sync_entity(self):
+        pass
+
+    def sync_entity_one(self):
+
+        payload = [{
+            "@name": "consult",
+            "entity": "Comp",
+            "key": self.efficy_key,
+            "@func": [{"@name": "master"}]
+        }]
+
+        data = self.env['efficy.mapping.model'].json_request(payload)
+        sync_date = fields.Datetime.now()
+        sync_sequence = self.env.ref('efficy_accounting.seq_efficy_sync_log').next_by_id()
+        self = self.with_context(sync_date=sync_date, sync_sequence=sync_sequence)
+        dic_company = data[0]['@func'][0]['#result']['#data']
+        self.process_data(dic_company, 'K_COMPANY', 'Comp')
+
+    def button_run_query(self):
+        self.run_query()
+
+    def run_query(self, noupdate=False, limit=False):
+
+        def ans_format(ans):
+            dic_company = []
+            keys_company = []
+
+            fields_company = ['K_COMPANY', 'NAME', 'F_IBAN', 'STREET', 'COUNTRYSHORT', 'POSTCODE', 'CITY', 'EMAIL1', 'VAT']
+
+            for func in ans[0]['@func']:
+                for d in func['#result']['#data']:
+                    if d.get('K_COMPANY') not in keys_company:
+                        dic_company.append({f: d.get(f) for f in fields_company})
+                        keys_company.append(d.get('K_COMPANY'))
+
+            return dic_company
+
+        payload = [{
+            '@name': 'api',
+            '@func': [{'@name': 'query', 'key': 12241, 'param1': rec.efficy_key} for rec in self]
+        }]
+
+        ans = self.env['efficy.mapping.model'].json_request(payload)
+        dic_company = ans_format(ans)
+
+        sync_date = fields.Datetime.now()
+        sync_sequence = self.env.ref('efficy_accounting.seq_efficy_sync_log').next_by_id()
+        self = self.with_context(sync_date=sync_date, sync_sequence=sync_sequence)
+
+        self.env['res.partner'].process_data(dic_company, 'K_COMPANY', 'Comp')
+
+    @api.model
     def _process_data(self, d, log):
         bank_id = self.env['res.partner.bank'].search([('acc_number', '=', d['F_IBAN'])])
         country_id = self.env['res.country'].search([('code', '=', d['COUNTRYSHORT'])], limit=1)
@@ -24,7 +77,7 @@ class ResPartner(models.Model):
         record_vals = {
             'efficy_key': d['K_COMPANY'],
             'efficy_entity': 'Comp',
-            'name': d['NAME_1'],
+            'name': d['NAME'],
             'bank_ids': bank_id if bank_id else [(0, 0, {'acc_number': d['F_IBAN']})],
             'street': d['STREET'],
             'country_id': country_id.id,
@@ -37,4 +90,14 @@ class ResPartner(models.Model):
         }
 
         return record_vals
+
+    def _create_empty(self, d):
+
+        if self:
+            return
+
+        self.create({
+            'efficy_entity': 'Comp',
+            'efficy_key': d.get('K_COMPANY'),
+        })
 
