@@ -538,6 +538,8 @@ class AccountMove(models.Model):
                     'discount': d.get('DISCOUNT', 0),
                     'price_unit': round(d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100, 2),
                     'tax_ids': tax_ids,
+                    'efficy_entity': 'Rela',
+                    'efficy_key': d['K_RELATION']
                 }))
 
             return line_vals
