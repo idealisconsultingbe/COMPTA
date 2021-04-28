@@ -62,7 +62,7 @@ class ResPartner(models.Model):
 
     @api.model
     def _process_data(self, d, log):
-        bank_id = self.env['res.partner.bank'].search([('acc_number', '=', d['F_IBAN'])])
+        # bank_id = self.env['res.partner.bank'].search([('acc_number', '=', d['F_IBAN'])])
         country_id = self.env['res.country'].search([('code', '=', d['COUNTRYSHORT'])], limit=1)
 
         # CHECK VAT
@@ -80,7 +80,7 @@ class ResPartner(models.Model):
             'efficy_key': d['K_COMPANY'],
             'efficy_entity': 'Comp',
             'name': d.get('NAME') or d.get('NAME_1'),
-            'bank_ids': bank_id and [] or [(0, 0, {'acc_number': d['F_IBAN']})],
+            # 'bank_ids': bank_id and [] or [(0, 0, {'acc_number': d['F_IBAN']})],
             'street': d['STREET'],
             'country_id': country_id.id,
             'zip': d['POSTCODE'],
