@@ -35,12 +35,11 @@ class Log():
     def error(self, message):
         self.messages.append('<li><b style="color:red">ERROR</b> %s </li>' % message)
         self.status = 'error'
-        _logger.warning(message)
 
     def failed(self, message, raise_exc=True):
         self.messages.append('<li><b style="color:red">FAILED</b> %s </li>' % message)
         self.status = 'failed'
-        _logger.warning(message)
+        _logger.info(message)
         #self.traceback = traceback.print_exc()
         # print(self.traceback)
         if raise_exc:

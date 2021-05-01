@@ -341,13 +341,12 @@ class AccountMove(models.Model):
                 self.status = 'error'
                 if record:
                     record.efficy_sync_status = 'error'
-                _logger.warning(message)
 
             def failed(self, message):
                 self.messages.append('<li><b style="color:red">FAILED</b> %s </li>' % message)
                 self.status = 'failed'
                 record.efficy_sync_status = 'failed'
-                _logger.warning(message)
+                # _logger.(message)
 
             def done(self):
                 self.status = self.status or 'success'
@@ -516,9 +515,15 @@ class AccountMove(models.Model):
 
                 if any(tax_account_ids.mapped('deprecated')):
                     record.efficy_sync_status = 'failed'
-                    log.error("Account deprecated on tax repartition: %s" % tax_account_ids.read(
+                    log.failed("Account deprecated on tax repartition: %s" % tax_account_ids.read(
                         ['name', 'code', 'company_id']))
                     raise UserError("Account deprecated on tax repartition: %s\n" % tax_account_ids.read(
+                        ['name', 'code', 'company_id']))
+
+                if any((partner_id.propery_account_receivable_id + partner_id.property_account_payable_id).mapped('deprecated')):
+                    log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
+                        ['name', 'code', 'company_id']))
+                    raise UserError("Account deprecated on partner's property account: %s\n" % tax_account_ids.read(
                         ['name', 'code', 'company_id']))
 
                 log.info("- Default taxes : %s, fiscal position : %s, Using taxes : %s\n" % (
@@ -782,9 +787,11 @@ class AccountMoveLine(models.Model):
         tax_account_ids = tax_ids.invoice_repartition_line_ids.account_id
 
         if any(tax_account_ids.mapped('deprecated')):
-            log.error("Account deprecated on tax repartition: %s" % tax_account_ids.read(
+            log.failed("Account deprecated on tax repartition: %s" % tax_account_ids.read(
                 ['name', 'code', 'company_id']))
-            raise UserError("Account deprecated on tax repartition: %s\n" % tax_account_ids.read(
+
+        if any((move_id.partner_id.propery_account_receivable_id + move_id.partner_id.property_account_payable_id).mapped('deprecated')):
+            log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
                 ['name', 'code', 'company_id']))
 
         log.info("- Default taxes : %s, fiscal position : %s, Using taxes : %s\n" % (
