@@ -99,6 +99,7 @@ class ResPartner(models.Model):
             return
 
         self.create({
+            'name': 'False',
             'efficy_entity': 'Comp',
             'efficy_key': d.get('K_COMPANY'),
         })

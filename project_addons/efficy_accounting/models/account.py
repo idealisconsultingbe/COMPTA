@@ -1,6 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from time import time
+from datetime import date
 from odoo.addons.efficy_accounting.models.tools import Log
 import logging
 import json
@@ -198,7 +199,7 @@ class AccountMove(models.Model):
             'efficy_key': d.get('K_RELATION'),
         })
 
-    def run_query(self, date_from=False, noupdate=False, limit=False, company=True, document=True, relation=True, file=True):
+    def run_query(self, date_from=date(2021, 1, 1), date_to=date.today(), noupdate=False, limit=False, company=True, document=True, relation=True, file=True):
 
         def ans_format(ans):
             dic_document = []
@@ -241,15 +242,10 @@ class AccountMove(models.Model):
                 '@name': 'api',
                 '@func': [{'@name': 'query', 'key': 12004, 'param1': rec.efficy_key} for rec in self if rec.efficy_key]
             }]
-        elif date_from:
-            payload = [{
-                '@name': 'api',
-                '@func': [{'@name': 'query', 'key': 11969, 'param1': date_from.strftime("%d/%m/%Y")}]
-            }]
         else:
             payload = [{
                 '@name': 'api',
-                '@func': [{'@name': 'query', 'key': 11969}]
+                '@func': [{'@name': 'query', 'key': 11969, 'param1': date_from.strftime("%d/%m/%Y"), 'param2': date_to.strftime("%d/%m/%Y")}]
             }]
 
         ans = self.env['efficy.mapping.model'].json_request(payload)
@@ -520,7 +516,7 @@ class AccountMove(models.Model):
                     raise UserError("Account deprecated on tax repartition: %s\n" % tax_account_ids.read(
                         ['name', 'code', 'company_id']))
 
-                if any((partner_id.propery_account_receivable_id + partner_id.property_account_payable_id).mapped('deprecated')):
+                if any((partner_id.property_account_receivable_id + partner_id.property_account_payable_id).mapped('deprecated')):
                     log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
                         ['name', 'code', 'company_id']))
                     raise UserError("Account deprecated on partner's property account: %s\n" % tax_account_ids.read(
@@ -790,7 +786,7 @@ class AccountMoveLine(models.Model):
             log.failed("Account deprecated on tax repartition: %s" % tax_account_ids.read(
                 ['name', 'code', 'company_id']))
 
-        if any((move_id.partner_id.propery_account_receivable_id + move_id.partner_id.property_account_payable_id).mapped('deprecated')):
+        if any((move_id.partner_id.property_account_receivable_id + move_id.partner_id.property_account_payable_id).mapped('deprecated')):
             log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
                 ['name', 'code', 'company_id']))
 
