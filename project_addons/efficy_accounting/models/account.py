@@ -516,7 +516,13 @@ class AccountMove(models.Model):
                     raise UserError("Account deprecated on tax repartition: %s\n" % tax_account_ids.read(
                         ['name', 'code', 'company_id']))
 
-                if any((partner_id.property_account_receivable_id + partner_id.property_account_payable_id).mapped('deprecated')):
+                if any(partner_id.with_company(company_id).partner_id.property_account_receivable_id.mapped('deprecated')):
+                    log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
+                        ['name', 'code', 'company_id']))
+                    raise UserError("Account deprecated on partner's property account: %s\n" % tax_account_ids.read(
+                        ['name', 'code', 'company_id']))
+
+                if any(partner_id.with_company(company_id).partner_id.property_account_payable_id.mapped('deprecated')):
                     log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
                         ['name', 'code', 'company_id']))
                     raise UserError("Account deprecated on partner's property account: %s\n" % tax_account_ids.read(
@@ -786,7 +792,11 @@ class AccountMoveLine(models.Model):
             log.failed("Account deprecated on tax repartition: %s" % tax_account_ids.read(
                 ['name', 'code', 'company_id']))
 
-        if any((move_id.partner_id.property_account_receivable_id + move_id.partner_id.property_account_payable_id).mapped('deprecated')):
+        if any(move_id.with_company(company_id).partner_id.property_account_receivable_id.mapped('deprecated')):
+            log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
+                ['name', 'code', 'company_id']))
+
+        if any(move_id.with_company(company_id).partner_id.property_account_payable_id.mapped('deprecated')):
             log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
                 ['name', 'code', 'company_id']))
 
