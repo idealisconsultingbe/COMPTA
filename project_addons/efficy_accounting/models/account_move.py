@@ -17,6 +17,13 @@ class AccountMove(models.Model):
     efficy_attachment_ids = fields.One2many(comodel_name='efficy.invoice.attachment', inverse_name='move_id')
     amount_residual = fields.Monetary(store=True)
     efficy_reference = fields.Char()
+    efficy_total_amount = fields.Float()
+    total_amount_diff = fields.Float(compute='_compute_total_amount_diff')
+
+    @api.depends('efficy_total_amount', 'amount_total')
+    def _compute_total_amount_diff(self):
+        for rec in self:
+            rec.total_amount_diff = rec.amount_total - rec.efficy_total_amount * (-1 if rec.move_type in ['out_invoice', 'in_invoice'] else 1)
 
     def sync_entity_one(self):
 
@@ -116,6 +123,7 @@ class AccountMove(models.Model):
             'currency_id': currency_id.id,
             # 'invoice_line_ids': line_vals,
             'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_customer_invoices').id,
+            'efficy_total_amount': d['TOTAL_WITH_VAT']
         }
 
     def _postprocess_data(self, d, log):
