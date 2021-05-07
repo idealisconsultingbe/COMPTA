@@ -75,13 +75,13 @@
             <xpath expr="//tree" position="inside">
                 <field name="efficy_ref"/>
                 <field name="approbation_status"/>
-<!--                <field name="efficy_sync_status" widget="badge"-->
-<!--                       decoration-success="efficy_sync_status == 'success'"-->
-<!--                       decoration-warning="efficy_sync_status == 'warning'"-->
-<!--                       decoration-muted="efficy_sync_status == 'skipped'"-->
-<!--                       decoration-danger="efficy_sync_status == 'failed'"-->
-<!--                       optional="hide"-->
-<!--                />-->
+                <field name="efficy_sync_status" widget="badge"
+                       decoration-success="efficy_sync_status == 'success'"
+                       decoration-warning="efficy_sync_status == 'warning'"
+                       decoration-muted="efficy_sync_status == 'skipped'"
+                       decoration-danger="efficy_sync_status == 'failed'"
+                       optional="hide"
+                />
             </xpath>
             <xpath expr="//field[@name='name']" position="attributes">
                 <attribute name="optional">show</attribute>

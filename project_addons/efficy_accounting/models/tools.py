@@ -40,7 +40,8 @@ class Log():
         self.messages.append('<li><b style="color:red">FAILED</b> %s </li>' % message)
         self.status = 'failed'
         _logger.info(message)
-        #self.traceback = traceback.print_exc()
+        if isinstance(message, Exception):
+            self.traceback = ''.join(traceback.format_exception(None, message, message.__traceback__))
         # print(self.traceback)
         if raise_exc:
             raise FailedException()

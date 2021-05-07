@@ -1,6 +1,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from time import time
+import traceback
 from datetime import date
 from odoo.addons.efficy_accounting.models.tools import Log
 import logging
@@ -151,10 +152,10 @@ class AccountMove(models.Model):
         if not currency_id:
             log.failed("No currency found for %s" % d['R_CURRCY'] or 'None')
 
-        line_vals = [(5, 0, 0)] + [(0, 0, self.env['account.move.line']._process_data(data, log)) for data in self._context.get('line_data') if data['K_DOCUMENT'] == d['K_DOCUMENT']]
+        # line_vals = [(5, 0, 0)] + [(0, 0, self.env['account.move.line']._process_data(data, log)) for data in self._context.get('line_data') if data['K_DOCUMENT'] == d['K_DOCUMENT']]
 
         partner_id = self.env['res.partner'].search([('efficy_entity', '=', 'Comp'), ('efficy_key', '=', d.get('K_COMPANY'))]) or\
-                     self.env['res.partner'].create({'efficy_entity': 'Comp', 'efficy_key': d.get('K_COMPANY')})
+                     self.env['res.partner'].create({'efficy_entity': 'Comp', 'efficy_key': d.get('K_COMPANY'), 'name': 'False'})
 
         return {
             'efficy_key': d['K_DOCUMENT'],
@@ -168,7 +169,7 @@ class AccountMove(models.Model):
             'journal_id': self.with_context(default_move_type=move_type).with_company(company_id.id)._get_default_journal().id,
             'invoice_date_due': d.get('EXP_DATE') or d.get('D_INVOICE'),
             'currency_id': currency_id.id,
-            'invoice_line_ids': line_vals,
+            # 'invoice_line_ids': line_vals,
             'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_customer_invoices').id,
         }
 
@@ -193,13 +194,17 @@ class AccountMove(models.Model):
         if self:
             return
 
-        self.create({
+        create_vals = {
             'efficy_reference': d.get('REFERENCE', 'False'),
-            'efficy_entity': 'Rela',
+            'efficy_entity': 'Docu',
             'efficy_key': d.get('K_RELATION'),
-        })
+        }
 
-    def run_query(self, date_from=date(2021, 1, 1), date_to=date.today(), noupdate=False, limit=False, company=True, document=True, relation=True, file=True):
+        print(create_vals)
+
+        self.create(create_vals)
+
+    def run_query(self, date_from=date(2021, 1, 1), date_to=date.today(), noupdate=False, limit=False, company=False, document=True, relation=True, file=False):
 
         def ans_format(ans):
             dic_document = []
@@ -263,8 +268,9 @@ class AccountMove(models.Model):
 
         if file:
             self.env['efficy.invoice.attachment'].process_data(dic_file, 'K_FILE', 'File')
-        # if relation:
-        #     self.env['account.move.line'].process_data(dic_relation, 'K_RELATION', 'Rela')
+
+        if relation:
+            self.env['account.move.line'].process_data(dic_relation, 'K_RELATION', 'Rela')
 
         if not self:
             self.env.company.efficy_last_sync_date = sync_date
@@ -317,6 +323,7 @@ class AccountMove(models.Model):
                 self.key = key
                 self.data = data
                 self.raw = raw
+                self.traceback = False
 
             def skipped(self, message):
                 self.messages.append('<li><b style="color:gray">SKIPPED</b> %s </li>' % message)
@@ -342,6 +349,8 @@ class AccountMove(models.Model):
                 self.messages.append('<li><b style="color:red">FAILED</b> %s </li>' % message)
                 self.status = 'failed'
                 record.efficy_sync_status = 'failed'
+                if isinstance(message, Exception):
+                    self.traceback = ''.join(traceback.format_exception(None, message, message.__traceback__))
                 # _logger.(message)
 
             def done(self):
@@ -361,6 +370,7 @@ class AccountMove(models.Model):
                     'sync_data': self.data,
                     'sync_status': self.status,
                     'sync_raw_data': self.raw,
+                    'sync_traceback': self.traceback
                 }
 
         def parse_reference(ref):
@@ -516,16 +526,16 @@ class AccountMove(models.Model):
                     raise UserError("Account deprecated on tax repartition: %s\n" % tax_account_ids.read(
                         ['name', 'code', 'company_id']))
 
-                if any(partner_id.with_company(company_id).partner_id.property_account_receivable_id.mapped('deprecated')):
-                    log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
+                if any(partner_id.with_company(company_id).property_account_receivable_id.mapped('deprecated')):
+                    log.failed("Account deprecated on partner's property account: %s" % partner_id.with_company(company_id).property_account_receivable_id.read(
                         ['name', 'code', 'company_id']))
-                    raise UserError("Account deprecated on partner's property account: %s\n" % tax_account_ids.read(
+                    raise UserError("Account deprecated on partner's property account: %s\n" % partner_id.with_company(company_id).property_account_receivable_id.read(
                         ['name', 'code', 'company_id']))
 
-                if any(partner_id.with_company(company_id).partner_id.property_account_payable_id.mapped('deprecated')):
-                    log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
+                if any(partner_id.with_company(company_id).property_account_payable_id.mapped('deprecated')):
+                    log.failed("Account deprecated on partner's property account: %s" % partner_id.with_company(company_id).property_account_payable_id.read(
                         ['name', 'code', 'company_id']))
-                    raise UserError("Account deprecated on partner's property account: %s\n" % tax_account_ids.read(
+                    raise UserError("Account deprecated on partner's property account: %s\n" % partner_id.with_company(company_id).property_account_payable_id.read(
                         ['name', 'code', 'company_id']))
 
                 log.info("- Default taxes : %s, fiscal position : %s, Using taxes : %s\n" % (
@@ -792,12 +802,14 @@ class AccountMoveLine(models.Model):
             log.failed("Account deprecated on tax repartition: %s" % tax_account_ids.read(
                 ['name', 'code', 'company_id']))
 
-        if any(move_id.with_company(company_id).partner_id.property_account_receivable_id.mapped('deprecated')):
-            log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
+        if any(partner_id.with_company(company_id).property_account_receivable_id.mapped('deprecated')):
+            log.failed("Account deprecated on partner's property account: %s" % partner_id.with_company(
+                company_id).property_account_receivable_id.read(
                 ['name', 'code', 'company_id']))
 
-        if any(move_id.with_company(company_id).partner_id.property_account_payable_id.mapped('deprecated')):
-            log.failed("Account deprecated on partner's property account: %s" % tax_account_ids.read(
+        if any(partner_id.with_company(company_id).property_account_payable_id.mapped('deprecated')):
+            log.failed("Account deprecated on partner's property account: %s" % partner_id.with_company(
+                company_id).property_account_payable_id.read(
                 ['name', 'code', 'company_id']))
 
         log.info("- Default taxes : %s, fiscal position : %s, Using taxes : %s\n" % (

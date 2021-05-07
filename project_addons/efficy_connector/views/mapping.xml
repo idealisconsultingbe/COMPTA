@@ -144,6 +144,9 @@
                     </group>
                     <field name="sync_message"/>
                     <group>
+                        <field name="sync_traceback"/>
+                    </group>
+                    <group>
                         <field name="sync_data"/>
                     </group>
                     <group>

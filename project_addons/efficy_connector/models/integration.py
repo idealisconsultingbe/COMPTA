@@ -87,7 +87,7 @@ class EfficyIntegrationMixin(models.AbstractModel):
                 _logger.warning("Processing limit reached, stopping")
                 break
 
-            _logger.info("Processing key %s" % d[key_field])
+            _logger.info("Processing entity-key %s-%s" % (entity, d[key_field]))
 
             log.reset(date=self._context.get('sync_date'), sequence=self._context.get('sync_sequence'),
                       entity=entity, key=d[key_field], data=json.dumps(d, indent=2))
