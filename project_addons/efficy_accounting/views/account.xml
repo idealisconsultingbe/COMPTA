@@ -31,7 +31,7 @@
             <xpath expr="//notebook" position="inside">
                 <page string="Efficy connector">
                     <group>
-                        <field name="efficy_mapping_model_id"/>
+<!--                        <field name="efficy_mapping_model_id"/>-->
                         <field name="efficy_entity"/>
                         <field name="efficy_key"/>
                     </group>
@@ -44,6 +44,12 @@
             <xpath expr="//field[@name='invoice_line_ids']/tree" position="inside">
                 <field name="start_recognition_date" optional="show"/>
                 <field name="end_recognition_date" optional="show"/>
+                <field name="efficy_sync_status" widget="badge" optional="hide"
+                       decoration-success="efficy_sync_status == 'success'"
+                       decoration-warning="efficy_sync_status == 'warning'"
+                       decoration-muted="efficy_sync_status == 'skipped'"
+                       decoration-danger="efficy_sync_status == 'failed'"
+                />
             </xpath>
             <xpath expr="//field[@name='line_ids']/tree" position="inside">
                 <field name="start_recognition_date" optional="show"/>
@@ -62,6 +68,19 @@
                 <page string="Efficy Sync Logs">
                     <field name="efficy_sync_log_ids"/>
                 </page>
+            </xpath>
+            <xpath expr="//field[@name='invoice_line_ids']/form/sheet" position="inside">
+                <notebook>
+                    <page string="Efficy Sync Logs">
+                        <field name="efficy_sync_log_ids"/>
+                    </page>
+                    <page string="Efficy connector">
+                        <group>
+                            <field name="efficy_entity"/>
+                            <field name="efficy_key"/>
+                        </group>
+                    </page>
+                </notebook>
             </xpath>
         </field>
     </record>
@@ -106,6 +125,16 @@
             <xpath expr="//field[@name='name']" position="after">
                 <field name="efficy_reference"/>
             </xpath>
+            <xpath expr="//tree" position="inside">
+                <field name="efficy_ref" optional="hide"/>
+                <field name="efficy_sync_status" widget="badge"
+                       decoration-success="efficy_sync_status == 'success'"
+                       decoration-warning="efficy_sync_status == 'warning'"
+                       decoration-muted="efficy_sync_status == 'skipped'"
+                       decoration-danger="efficy_sync_status == 'failed'"
+                       optional="hide"
+                />
+            </xpath>
         </field>
     </record>
 
@@ -116,6 +145,19 @@
         <field name="arch" type="xml">
             <xpath expr="." position="inside">
                 <field name="efficy_reference"/>
+                <field name="efficy_key"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_account_move_filter" model="ir.ui.view">
+        <field name="name">account.move.select</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_account_move_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="." position="inside">
+                <field name="efficy_reference"/>
+                <field name="efficy_key"/>
             </xpath>
         </field>
     </record>

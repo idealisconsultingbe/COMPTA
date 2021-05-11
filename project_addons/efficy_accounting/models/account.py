@@ -107,7 +107,7 @@ class AccountMove(models.Model):
         self.process_data(dic_document, 'K_DOCUMENT', 'Docu')
 
     def name_get(self):
-        return [(rec.id, rec.payment_reference) for rec in self]
+        return [(rec.id, rec.efficy_reference) for rec in self]
 
     def _preprocess_data(self, d, log):
 
