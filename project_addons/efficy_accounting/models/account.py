@@ -411,10 +411,12 @@ class AccountMove(models.Model):
             if d.get('VAT'):
                 vat_number = d['VAT'].replace(' ', '')
                 if self.env['res.partner'].simple_vat_check(d['COUNTRYSHORT'], vat_number):
-                    vat = "%s%s" % (d['COUNTRYSHORT'], vat_number)
+                    # vat = "%s%s" % (d['COUNTRYSHORT'], vat_number)
+                    vat = "%s" % (vat_number)
                 else:
                     record.efficy_sync_status = 'warning'
-                    log.warning("Bad vat format: %s%s" % (d['COUNTRYSHORT'], vat_number))
+                    # log.warning("Bad vat format: %s%s" % (d['COUNTRYSHORT'], vat_number))
+                    log.warning("Bad vat format: %s" % (vat_number))
 
             partner_id = self.env['res.partner'].search([('efficy_key', '=', d['K_COMPANY'])])
 
