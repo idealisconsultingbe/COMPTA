@@ -91,19 +91,25 @@
                        decoration-muted="efficy_sync_status == 'skipped'"
                        decoration-danger="efficy_sync_status == 'failed'"
                 />
-                <field name="total_amount_without_vat_diff" optional="hide"
-                       decoration-success="abs(total_amount_without_vat_diff) &lt;= 0.01"
-                       decoration-danger="abs(total_amount_without_vat_diff) &gt; 0.01"
+                <field name="price_subtotal_diff" optional="hide"
+                       decoration-success="price_subtotal_diff == 0"
+                       decoration-danger="price_subtotal_diff != 0"
                 />
 <!--                <field name="total_amount_without_vat_diff" optional="hide"/>-->
             </xpath>
             <xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='product_id']" position="attributes">
                 <attribute name="optional">hide</attribute>
             </xpath>
+            <xpath expr="//field[@name='amount_untaxed']" position="after">
+                <field name="amount_untaxed_diff"
+                       decoration-success="amount_untaxed_diff == 0"
+                       decoration-danger="amount_untaxed_diff != 0"
+                />
+            </xpath>
             <xpath expr="//field[@name='amount_total']" position="after">
-                <field name="total_amount_diff"
-                       decoration-success="total_amount_diff == 0"
-                       decoration-danger="total_amount_diff != 0"
+                <field name="amount_total_diff"
+                       decoration-success="amount_total_diff == 0"
+                       decoration-danger="amount_total_diff != 0"
                 />
             </xpath>
         </field>
@@ -125,9 +131,9 @@
                        decoration-danger="efficy_sync_status == 'failed'"
                        optional="hide"
                 />
-                <field name="total_amount_diff" optional="hide"
-                       decoration-success="total_amount_diff == 0"
-                       decoration-danger="total_amount_diff != 0"
+                <field name="amount_total_diff" optional="hide"
+                       decoration-success="amount_total_diff == 0"
+                       decoration-danger="amount_total_diff != 0"
                 />
             </xpath>
             <xpath expr="//field[@name='name']" position="attributes">
@@ -162,9 +168,9 @@
                        decoration-danger="efficy_sync_status == 'failed'"
                        optional="hide"
                 />
-                <field name="total_amount_diff" optional="hide"
-                       decoration-success="total_amount_diff == 0"
-                       decoration-danger="total_amount_diff != 0"
+                <field name="amount_total_diff" optional="hide"
+                       decoration-success="amount_total_diff == 0"
+                       decoration-danger="amount_total_diff != 0"
                 />
             </xpath>
         </field>

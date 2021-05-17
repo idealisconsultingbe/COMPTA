@@ -17,13 +17,16 @@ class AccountMove(models.Model):
     efficy_attachment_ids = fields.One2many(comodel_name='efficy.invoice.attachment', inverse_name='move_id')
     amount_residual = fields.Monetary(store=True)
     efficy_reference = fields.Char()
-    efficy_total_amount = fields.Float()
-    total_amount_diff = fields.Float(compute='_compute_total_amount_diff')
+    amount_total_efficy = fields.Float()
+    amount_total_diff = fields.Float(compute='_compute_total_diff', string="Total Diff", store=True, digits=(1,3))
+    amount_untaxed_efficy = fields.Float()
+    amount_untaxed_diff = fields.Float(compute='_compute_total_diff', string="Unatxed amount diff", store=True, digits=(1,3))
 
-    @api.depends('efficy_total_amount', 'amount_total')
-    def _compute_total_amount_diff(self):
+    @api.depends('amount_total_efficy', 'amount_total', 'amount_untaxed_efficy', 'amount_untaxed')
+    def _compute_total_diff(self):
         for rec in self:
-            rec.total_amount_diff = rec.amount_total + rec.efficy_total_amount * (-1 if rec.move_type in ['out_invoice', 'in_invoice'] else 1)
+            rec.amount_untaxed_diff = rec.amount_untaxed - rec.amount_untaxed_efficy
+            rec.amount_total_diff = rec.amount_total - rec.amount_total_efficy
 
     def sync_entity_one(self):
 
@@ -123,7 +126,8 @@ class AccountMove(models.Model):
             'currency_id': currency_id.id,
             # 'invoice_line_ids': line_vals,
             'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_customer_invoices').id,
-            'efficy_total_amount': d['TOTAL_WITH_VAT']
+            'amount_total_efficy': d['TOTAL_WITH_VAT'],
+            'amount_untaxed_efficy': d['TOTAL_NO_VAT']
         }
 
     def _postprocess_data(self, d, log):
@@ -513,7 +517,7 @@ class AccountMove(models.Model):
                     'tax_ids': tax_ids,
                     # 'efficy_entity': 'Rela',
                     'efficy_key': d['K_RELATION'],
-                    'efficy_total_amount_without_vat': d['TOTAL']
+                    'amount_total_efficy': d['TOTAL']
                 }))
 
             return line_vals
