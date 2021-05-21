@@ -41,16 +41,6 @@
                 <field name="name" string="Odoo Reference"/>
                 <field name="approbation_status"/>
             </xpath>
-            <xpath expr="//field[@name='invoice_line_ids']/tree" position="inside">
-                <field name="start_recognition_date" optional="show"/>
-                <field name="end_recognition_date" optional="show"/>
-                <field name="efficy_sync_status" widget="badge" optional="hide"
-                       decoration-success="efficy_sync_status == 'success'"
-                       decoration-warning="efficy_sync_status == 'warning'"
-                       decoration-muted="efficy_sync_status == 'skipped'"
-                       decoration-danger="efficy_sync_status == 'failed'"
-                />
-            </xpath>
             <xpath expr="//field[@name='line_ids']/tree" position="inside">
                 <field name="start_recognition_date" optional="show"/>
                 <field name="end_recognition_date" optional="show"/>
@@ -92,8 +82,8 @@
                        decoration-danger="efficy_sync_status == 'failed'"
                 />
                 <field name="price_subtotal_diff" optional="hide"
-                       decoration-success="abs(price_subtotal_diff) &lt;= 0.02"
-                       decoration-danger="abs(price_subtotal_diff) &gt; 0.02"
+                       decoration-success="abs(price_subtotal_diff) &lt;= 0"
+                       decoration-danger="abs(price_subtotal_diff) &gt; 0"
                 />
 <!--                <field name="total_amount_without_vat_diff" optional="hide"/>-->
             </xpath>
