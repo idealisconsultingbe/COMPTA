@@ -11,6 +11,13 @@ class AccountMoveLine(models.Model):
 
     start_recognition_date = fields.Date()
     end_recognition_date = fields.Date()
+    efficy_total_amount_without_vat = fields.Float()
+    total_amount_without_vat_diff = fields.Float(compute='_compute_total_amount_without_vat_diff', string="Excl. VAT diff")
+
+    @api.depends('efficy_total_amount_without_vat', 'price_subtotal')
+    def _compute_total_amount_without_vat_diff(self):
+        for rec in self:
+            rec.total_amount_without_vat_diff = rec.efficy_total_amount_without_vat - rec.price_subtotal
 
     def _create_empty(self, d):
 
@@ -120,7 +127,8 @@ class AccountMoveLine(models.Model):
                                                                                  '1899-12-30'] else invoice_date,
             'quantity': d['QUANTITY'],
             'discount': d.get('DISCOUNT', 0),
-            'price_unit': round(d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100, 2),
+            'price_unit': d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100,
             'tax_ids': tax_ids,
             # 'move_id': move_id.id,
+            'efficy_total_amount_without_vat': d['TOTAL']
         }
