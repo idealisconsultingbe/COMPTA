@@ -23,7 +23,7 @@ class AccountMove(models.Model):
     @api.depends('efficy_total_amount', 'amount_total')
     def _compute_total_amount_diff(self):
         for rec in self:
-            rec.total_amount_diff = rec.amount_total - rec.efficy_total_amount * (-1 if rec.move_type in ['out_invoice', 'in_invoice'] else 1)
+            rec.total_amount_diff = rec.amount_total + rec.efficy_total_amount * (-1 if rec.move_type in ['out_invoice', 'in_invoice'] else 1)
 
     def sync_entity_one(self):
 
@@ -131,7 +131,7 @@ class AccountMove(models.Model):
         self.ensure_one()
 
         sign = 1
-        if self.amount_total < 0 and self.move_type in ['out_invoice', 'in_invoice']:
+        if d['TOTAL_WITH_VAT'] < 0 and self.move_type in ['out_invoice', 'in_invoice']:
             sign = -1
             self.action_switch_invoice_into_refund_credit_note()
 
@@ -171,7 +171,7 @@ class AccountMove(models.Model):
 
             fields_document = ['K_DOCUMENT', 'R_F_INVOICE_STATUS', 'REFERENCE', 'COMMUNICATION', 'D_INVOICE', 'EXP_DATE', 'R_CURRCY', 'TOTAL_WITH_VAT', 'TOTAL_NO_VAT', 'K_COMPANY']
             fields_company = ['K_COMPANY', 'NAME_1', 'F_IBAN', 'STREET', 'COUNTRYSHORT', 'POSTCODE', 'CITY', 'EMAIL1', 'VAT']
-            fields_relation = ['K_RELATION', 'COMMENT', 'QUANTITY', 'DISCOUNT', 'PRICE', 'F_MULTIPLIER', 'F_D_S_RECO', 'F_D_E_RECO', 'F_ACCOUNTING_TYPE', 'VAT_1', 'K_DOCUMENT']
+            fields_relation = ['K_RELATION', 'COMMENT', 'QUANTITY', 'DISCOUNT', 'PRICE', 'F_MULTIPLIER', 'F_D_S_RECO', 'F_D_E_RECO', 'F_ACCOUNTING_TYPE', 'VAT_1', 'K_DOCUMENT', 'TOTAL']
             fields_file = ['K_FILE', 'VERSION', 'K_DOCUMENT']
 
             for func in ans[0]['@func']:
@@ -216,6 +216,7 @@ class AccountMove(models.Model):
 
         if company:
             self.env['res.partner'].process_data(dic_company, 'K_COMPANY', 'Comp')
+
         if document:
             self.with_context(line_data=dic_relation).env['account.move'].process_data(dic_document, 'K_DOCUMENT', 'Docu')
 
@@ -243,7 +244,7 @@ class AccountMove(models.Model):
 
             fields_document = ['K_DOCUMENT', 'R_F_INVOICE_STATUS', 'REFERENCE', 'COMMUNICATION', 'D_INVOICE', 'EXP_DATE', 'R_CURRCY', 'TOTAL_WITH_VAT', 'TOTAL_NO_VAT']
             fields_company = ['K_COMPANY', 'NAME_1', 'F_IBAN', 'STREET', 'COUNTRYSHORT', 'POSTCODE', 'CITY', 'EMAIL1', 'VAT']
-            fields_relation = ['K_RELATION', 'COMMENT', 'QUANTITY', 'DISCOUNT', 'PRICE', 'F_MULTIPLIER', 'F_D_S_RECO', 'F_D_E_RECO', 'F_ACCOUNTING_TYPE', 'VAT_1']
+            fields_relation = ['K_RELATION', 'COMMENT', 'QUANTITY', 'DISCOUNT', 'PRICE', 'F_MULTIPLIER', 'F_D_S_RECO', 'F_D_E_RECO', 'F_ACCOUNTING_TYPE', 'VAT_1', 'TOTAL']
             fields_file = ['K_FILE', 'VERSION']
 
             for func in ans[0]['@func']:
@@ -511,7 +512,8 @@ class AccountMove(models.Model):
                     'price_unit': round(d['PRICE'] * d.get('F_MULTIPLIER', 100) / 100, 2),
                     'tax_ids': tax_ids,
                     # 'efficy_entity': 'Rela',
-                    'efficy_key': d['K_RELATION']
+                    'efficy_key': d['K_RELATION'],
+                    'efficy_total_amount_without_vat': d['TOTAL']
                 }))
 
             return line_vals
@@ -615,6 +617,7 @@ class AccountMove(models.Model):
                     'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_customer_invoices').id,
                     'invoice_line_ids': line_vals,
                     'efficy_attachment_ids': attachment_vals,
+                    'efficy_total_amount': d['document']['TOTAL_WITH_VAT'],
                 }
 
                 if record:
