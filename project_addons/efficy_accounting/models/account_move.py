@@ -20,7 +20,7 @@ class AccountMove(models.Model):
     amount_total_efficy = fields.Float()
     amount_total_diff = fields.Float(compute='_compute_total_diff', string="Total Diff", store=True, digits=(1,3))
     amount_untaxed_efficy = fields.Float()
-    amount_untaxed_diff = fields.Float(compute='_compute_total_diff', string="Unatxed amount diff", store=True, digits=(1,3))
+    amount_untaxed_diff = fields.Float(compute='_compute_total_diff', string="Unatxed amount diff", store=True, digits=(1,4))
 
     @api.depends('amount_total_efficy', 'amount_total', 'amount_untaxed_efficy', 'amount_untaxed')
     def _compute_total_diff(self):
@@ -517,7 +517,7 @@ class AccountMove(models.Model):
                     'tax_ids': tax_ids,
                     # 'efficy_entity': 'Rela',
                     'efficy_key': d['K_RELATION'],
-                    'amount_total_efficy': d['TOTAL']
+                    'price_subtotal_efficy': d['TOTAL']
                 }))
 
             return line_vals
@@ -621,7 +621,8 @@ class AccountMove(models.Model):
                     'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_customer_invoices').id,
                     'invoice_line_ids': line_vals,
                     'efficy_attachment_ids': attachment_vals,
-                    'efficy_total_amount': d['document']['TOTAL_WITH_VAT'],
+                    'amount_total_efficy': d['document']['TOTAL_WITH_VAT'],
+                    'amount_untaxed_efficy': d['document']['TOTAL_NO_VAT'],
                 }
 
                 if record:

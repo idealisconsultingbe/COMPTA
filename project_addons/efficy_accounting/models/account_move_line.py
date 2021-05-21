@@ -12,7 +12,7 @@ class AccountMoveLine(models.Model):
     start_recognition_date = fields.Date()
     end_recognition_date = fields.Date()
     price_subtotal_efficy = fields.Float()
-    price_subtotal_diff = fields.Float(compute='_compute_total_diff', string="Subtotal diff", digits=(1,3))
+    price_subtotal_diff = fields.Float(compute='_compute_total_diff', string="Subtotal diff", digits=(1, 4))
 
     @api.depends('price_subtotal_efficy', 'price_subtotal')
     def _compute_total_diff(self):
