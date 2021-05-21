@@ -92,8 +92,8 @@
                        decoration-danger="efficy_sync_status == 'failed'"
                 />
                 <field name="price_subtotal_diff" optional="hide"
-                       decoration-success="price_subtotal_diff == 0"
-                       decoration-danger="price_subtotal_diff != 0"
+                       decoration-success="abs(price_subtotal_diff) &lt;= 0.02"
+                       decoration-danger="abs(price_subtotal_diff) &gt; 0.02"
                 />
 <!--                <field name="total_amount_without_vat_diff" optional="hide"/>-->
             </xpath>
@@ -102,14 +102,14 @@
             </xpath>
             <xpath expr="//field[@name='amount_untaxed']" position="after">
                 <field name="amount_untaxed_diff"
-                       decoration-success="amount_untaxed_diff == 0"
-                       decoration-danger="amount_untaxed_diff != 0"
+                       decoration-success="abs(amount_untaxed_diff) &lt;= 0.02"
+                       decoration-danger="abs(amount_untaxed_diff) &gt; 0.02"
                 />
             </xpath>
             <xpath expr="//field[@name='amount_total']" position="after">
                 <field name="amount_total_diff"
-                       decoration-success="amount_total_diff == 0"
-                       decoration-danger="amount_total_diff != 0"
+                       decoration-success="abs(amount_total_diff) &lt;= 0.02"
+                       decoration-danger="abs(amount_total_diff) &gt; 0.02"
                 />
             </xpath>
         </field>
@@ -132,8 +132,8 @@
                        optional="hide"
                 />
                 <field name="amount_total_diff" optional="hide"
-                       decoration-success="amount_total_diff == 0"
-                       decoration-danger="amount_total_diff != 0"
+                       decoration-success="abs(amount_total_diff) &lt;= 0.02"
+                       decoration-danger="abs(amount_total_diff) &gt; 0.02"
                 />
             </xpath>
             <xpath expr="//field[@name='name']" position="attributes">
@@ -169,8 +169,8 @@
                        optional="hide"
                 />
                 <field name="amount_total_diff" optional="hide"
-                       decoration-success="amount_total_diff == 0"
-                       decoration-danger="amount_total_diff != 0"
+                       decoration-success="abs(amount_total_diff) &lt;= 0.02"
+                       decoration-danger="abs(amount_total_diff) &gt; 0.02"
                 />
             </xpath>
         </field>
