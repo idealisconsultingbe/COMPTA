@@ -9,8 +9,8 @@ class AccountMoveLine(models.Model):
     _name = 'account.move.line'
     _inherit = ['account.move.line', 'efficy.integration.mixin']
 
-    start_recognition_date = fields.Date()
-    end_recognition_date = fields.Date()
+    start_date = fields.Date()
+    end_date = fields.Date()
     price_subtotal_efficy = fields.Float()
     price_subtotal_diff = fields.Float(compute='_compute_total_diff', string="Subtotal diff", digits=(1, 4))
 
@@ -121,9 +121,9 @@ class AccountMoveLine(models.Model):
             'analytic_account_id': analytic_account.id,
             'account_id': account_id.id,
             'analytic_tag_ids': analytic_default.analytic_tag_ids.ids,
-            'end_recognition_date': d['F_D_E_RECO'] if d['F_D_E_RECO'] not in ['30/12/1899',
+            'end_date': d['F_D_E_RECO'] if d['F_D_E_RECO'] not in ['30/12/1899',
                                                                                '1899-12-30'] else invoice_date,
-            'start_recognition_date': d['F_D_S_RECO'] if d['F_D_S_RECO'] not in ['30/12/1899',
+            'start_date': d['F_D_S_RECO'] if d['F_D_S_RECO'] not in ['30/12/1899',
                                                                                  '1899-12-30'] else invoice_date,
             'quantity': d['QUANTITY'],
             'discount': d.get('DISCOUNT', 0),
