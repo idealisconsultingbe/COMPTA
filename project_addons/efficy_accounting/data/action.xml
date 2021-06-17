@@ -46,7 +46,25 @@
         <field name="doall" eval="False"/>
         <field name="model_id" ref="account.model_account_move"/>
         <field name="code">
-#date_from = env.company.efficy_last_sync_date
+date_from = env.company.efficy_last_sync_date
+date_to = date_from + datetime.timedelta(days=30)
+(records or env['account.move']).get_moves_with_lines(date_from=date_from, date_to=date_to)
+        </field>
+        <field name="state">code</field>
+    </record>
+
+    <record id="ir_cron_efficy_sync_move_with_lines_manual" model="ir.cron">
+        <field name="name">Efficy: sync moves with lines (manual)</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="False"/>
+        <field name="nextcall" eval="(DateTime.now().replace(hour=2, minute=0) + timedelta(days=1)).strftime('%Y-%m-%d %H:%M:%S')" />
+        <field name="doall" eval="False"/>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="code">
+# You can change the dates here to specify a sync range
+# Note that the dates correspond to the last update dates of invoices in efficy
 date_from = datetime.datetime(2021, 3, 31)
 date_to = datetime.datetime(2021, 4, 30)
 (records or env['account.move']).get_moves_with_lines(date_from=date_from, date_to=date_to)
