@@ -387,7 +387,6 @@ class AccountMove(models.Model):
                 'country_id': countries[d['COUNTRYSHORT']].id if d['COUNTRYSHORT'] else False,
                 'zip': d['POSTCODE'],
                 'city': d['CITY'],
-                'vat': vat,
                 'email': d['EMAIL1'],
                 'company_type': 'company',
                 'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_companies').id,
@@ -398,6 +397,8 @@ class AccountMove(models.Model):
                 partner_id.write(partner_vals)
             else:
                 partner_id = partner_id.create(partner_vals)
+
+            partner_id.write({'vat': vat})
 
             return partner_id
 

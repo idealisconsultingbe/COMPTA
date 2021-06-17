@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import ValidationError
 
 
 class ResPartner(models.Model):
@@ -65,6 +66,24 @@ class ResPartner(models.Model):
         # bank_id = self.env['res.partner.bank'].search([('acc_number', '=', d['F_IBAN'])])
         country_id = self.env['res.country'].search([('code', '=', d['COUNTRYSHORT'])], limit=1)
 
+        record_vals = {
+            'efficy_key': d['K_COMPANY'],
+            'efficy_entity': 'Comp',
+            'name': d.get('NAME') or d.get('NAME_1'),
+            # 'bank_ids': bank_id and [] or [(0, 0, {'acc_number': d['F_IBAN']})],
+            'street': d['STREET'],
+            'country_id': country_id.id,
+            'zip': d['POSTCODE'],
+            'city': d['CITY'],
+            'email': d['EMAIL1'],
+            'company_type': 'company',
+            'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_companies').id,
+        }
+
+        return record_vals
+
+    def _postprocess_data(self, d, log):
+
         # CHECK VAT
         vat = False
         if d.get('VAT'):
@@ -78,22 +97,10 @@ class ResPartner(models.Model):
         else:
             log.warning("Missing TVA")
 
-        record_vals = {
-            'efficy_key': d['K_COMPANY'],
-            'efficy_entity': 'Comp',
-            'name': d.get('NAME') or d.get('NAME_1'),
-            # 'bank_ids': bank_id and [] or [(0, 0, {'acc_number': d['F_IBAN']})],
-            'street': d['STREET'],
-            'country_id': country_id.id,
-            'zip': d['POSTCODE'],
-            'city': d['CITY'],
-            'vat': vat,
-            'email': d['EMAIL1'],
-            'company_type': 'company',
-            'efficy_mapping_model_id': self.env.ref('efficy_accounting.efficy_mapping_model_companies').id,
-        }
-
-        return record_vals
+        try:
+            self.write({'vat': vat})
+        except Exception:
+            log.warning("Bad vat")
 
     def _create_empty(self, d):
 
@@ -105,4 +112,3 @@ class ResPartner(models.Model):
             'efficy_entity': 'Comp',
             'efficy_key': d.get('K_COMPANY'),
         })
-
