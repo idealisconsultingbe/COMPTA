@@ -1,0 +1,5 @@
+pdfplumber==0.5.27
+docx2txt==0.8
+pytesseract==0.3.7
+pdf2image==1.14.0
+

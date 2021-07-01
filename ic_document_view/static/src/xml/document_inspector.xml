@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+
+    <t t-name="documents.DocumentsInspector">
+    <div style="min-width:40%" class="o_documents_inspector h-100">
+        <t t-set="nbPreviews" t-value="widget.records.length"/>
+        <div class="o_documents_inspector_preview d-flex flex-row flex-wrap align-items-center justify-content-center position-relative">
+            <div t-if="nbPreviews === 0">
+                <t t-if="widget.currentFolder">
+                    <div class="o_inspector_folder_description"><t t-if="widget.currentFolder.description" t-raw="widget.currentFolder.description"/></div>
+                </t>
+            </div>
+            <t t-else="" t-call="documents.DocumentsInspector.previews"/>
+        </div>
+        <div class="o_documents_inspector_info">
+            <t t-if="nbPreviews === 0" t-call="documents.DocumentsInspector.globalInfo"/>
+            <t t-else="">
+                <t t-call="documents.DocumentsInspector.buttons"/>
+                <t t-call="documents.DocumentsInspector.documentsInfo"/>
+            </t>
+        </div>
+    </div>
+    </t>
+
+<t t-name="documents.DocumentsInspector.previews">
+    <t t-foreach="widget.records.slice(0, 4)" t-as="record">
+        <t t-set="recordData" t-value="widget.recordsData[record.id]"/>
+        <div name="document_preview" t-attf-class="{{widget._computeClasses(record)}}" style="min-width: 100%;height: 400px;padding:0px;">
+            <t t-set="mimetype" t-value="record.data.mimetype"/>
+            <t t-if="recordData.isImage or recordData.isGif or recordData.isYouTubeVideo">
+                <t t-set="size" t-value="nbPreviews === 1 ? '268x130' : nbPreviews === 2 ? '120x130' : '120x75'"/>
+                <img t-if="recordData.isYouTubeVideo"
+                     t-att-data-id="record.res_id"
+                     class="o_preview_available"
+                     t-attf-src="https://img.youtube.com/vi/#{recordData.youtubeToken}/0.jpg"
+                     alt="Youtube Video"/>
+                <t t-else="">
+                    <t t-set="unique" t-value="record.data.checksum ? record.data.checksum.slice(-8) : ''"/>
+                    <img class="o_preview_available o_documents_image_background"
+                         t-attf-src="/documents/image/#{record.res_id}/#{size}?unique=#{unique}"
+                         t-att-data-id="record.res_id"
+                         t-att-title="record.data.name"/>
+                </t>
+
+            </t>
+            <div t-elif="record.data.ic_local_url">
+            <div
+                         class="o_preview_available o_documents_image_background"
+                         t-attf-src="#{record.data.ic_local_url}"
+                         t-att-data-id="record.res_id"
+                         t-att-title="record.data.name"
+                         style="min-width: 100%;width:100%;height: 400px;padding-top:1px;position: absolute;background-color: transparent;left: 0px;"
+                         t-attf-data="#{record.data.ic_local_url}8&amp;#zoom=80&amp;scrollbar=0&amp;toolbar=0&amp;navpanes=0"
+                         type="application/pdf">
+
+            </div>
+                <object style="width:100%;height: 400px;" t-attf-data="#{record.data.ic_local_url}8&amp;#zoom=80&amp;scrollbar=0&amp;toolbar=0&amp;navpanes=0" type="application/pdf">
+                    <embed  t-attf-src="#{record.data.ic_local_url}8&amp;#zoom=80&amp;scrollbar=0&amp;toolbar=0&amp;navpanes=0" type="application/pdf" />
+                </object>
+            </div>
+            <div t-elif="record.data.url"
+                 class="o_image o_mimetype_icon"
+                 t-attf-data-mimetype="{{mimetype}}"
+                 t-att-title="record.data.name"
+                 t-att-data-id="record.res_id"/>
+            <div t-elif="record.data.type === 'empty'"
+                 class="o_inspector_request_icon fa fa-upload fa-5x"
+                 t-att-title="record.data.name"
+                 t-att-data-id="record.res_id"/>
+            <div t-else=""
+                 t-attf-class="o_image o_mimetype_icon {{
+                    (mimetype and (mimetype.indexOf('pdf') !== -1 or
+                    mimetype.indexOf('video') !== -1 or
+                    mimetype.indexOf('text') !== -1)) and 'o_preview_available' or ''}}"
+                 t-att-data-mimetype="mimetype"
+                 t-att-data-id="record.res_id"
+                 t-att-title="record.data.name"/>
+            <span t-if="record.data.type === 'empty'">
+                Upload Document
+            </span>
+        </div>
+        <i t-if="nbPreviews === 1 and !widget.isMobile" class="o_inspector_open_chatter rounded-circle text-center fa fa-comments" title="Open chatter"/>
+        <div t-if="record_index == 1 and record_size == 4" class="w-100"/>
+    </t>
+    <div t-if="nbPreviews &gt; 1" class="o_selection_info w-100 text-center mt-2">
+        <i class="o_selection_size"><b><t t-esc="nbPreviews"/></b> documents selected</i>
+    </div>
+</t>
+</templates>
+

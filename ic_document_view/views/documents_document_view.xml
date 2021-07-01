@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2020 Idealis Consulting-->
+
+<odoo>
+   <!-- Inherit kanban View to Modify it -->
+   <record id="ic_inherit_document_view_kanban" model="ir.ui.view">
+       <field name="name">Documents</field>
+       <field name="model">documents.document</field>
+       <field name="inherit_id" ref="documents.document_view_kanban"/>
+       <field name="arch" type="xml">
+
+           <xpath expr="//field[@name='activity_state']" position="after">
+               <!-- Add your fields or attributes here -->
+               <field name="ic_local_url"/>
+           </xpath>
+
+       </field>
+   </record>
+
+
+    <!-- Inherit Form View to Modify it -->
+    <record id="documents_view_list" model="ir.ui.view">
+        <field name="name">Documents</field>
+        <field name="model">documents.document</field>
+        <field name="inherit_id" ref="documents.documents_view_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='name']" position="after">
+                <!-- Add your fields or attributes here -->
+                <field name="ic_local_url" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
