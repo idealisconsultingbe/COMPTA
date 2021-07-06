@@ -53,10 +53,6 @@ EOT
 # install_odoo
 #
 function install_odoo {
-    if [ ! -f bootstrap.py ]; then
-        wget https://raw.github.com/buildout/buildout/master/bootstrap/bootstrap.py
-    fi
-
     # create a basic buildout.cfg if none is found
     check_and_create_buildout_cfg
 
@@ -68,7 +64,11 @@ function install_odoo {
             virtualenv-3.6 -p python36 venv
         fi
     else
-        if [ -f /usr/bin/python3.7 ]; then
+        if [ -f /usr/bin/python3.9 ]; then
+            virtualenv -p python3.9 venv
+        elif [ -f /usr/bin/python3.8 ]; then
+            virtualenv -p python3.8 venv
+        elif [ -f /usr/bin/python3.7 ]; then
             virtualenv -p python3.7 venv
         elif [ -f /usr/bin/python3.6 ]; then
             virtualenv -p python3.6 venv
@@ -76,10 +76,8 @@ function install_odoo {
             virtualenv -p python3 venv
         fi
     fi
-    venv/bin/pip3 install setuptools==50.3.2
-    venv/bin/pip3 install Werkzeug==0.14.1
-    venv/bin/python3 bootstrap.py
-    bin/buildout
+    venv/bin/pip3 install zc.buildout
+    venv/bin/buildout
 
     # if [ -f parts/odoo/requirements.txt ]; then
     #     echo "Installing PIP requirements"
