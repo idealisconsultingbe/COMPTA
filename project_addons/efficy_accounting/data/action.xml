@@ -113,4 +113,13 @@ records.run_query(date_from=date_from, date_to=date_to)
 <!--        <field name="state">code</field>-->
 <!--    </record>-->
 
+    <record model="ir.actions.server" id="action_efficy_push_payment_info">
+        <field name="name">Efficy: push payment info</field>
+        <field name="model_id" ref="account.model_account_move"/>
+        <field name="state">code</field>
+        <field name="code">
+            records.push_payment_info()
+        </field>
+    </record>
+
 </odoo>

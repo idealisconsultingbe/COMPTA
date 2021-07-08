@@ -677,3 +677,24 @@ class AccountMove(models.Model):
         _logger.info("All done")
         return processed_records, skipped_records, failed_records
 
+    def push_payment_info(self):
+
+        payload = [{
+            '@name': 'edit',
+            'entity': 'Docu',
+            'key': rec.efficy_key,
+            'commit': True,
+            'closecontext': True,
+            '@func': [{
+                '@name': 'update',
+                '@data': {
+                    'PRE_PAID': (rec.amount_total - rec.amount_residual) * (-1 if rec.move_type in ['out_refund', 'in_refund'] else 1),
+                    'TOTAL_TO_PAY': rec.amount_residual * (-1 if rec.move_type in ['out_refund', 'in_refund'] else 1),
+                },
+                'category': 'DOCU$INVOICING',
+                'tableview': 0,
+            }]
+        } for rec in self.filtered(lambda x: x.efficy_key and x.efficy_entity)]
+        _logger.info('Payment info pushed: %s' % payload)
+        ans = self.env['efficy.mapping.model'].json_request(payload)
+        _logger.info('Efficy returned : %s' % ans)
